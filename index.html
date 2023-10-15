@@ -1,0 +1,17 @@
+<script type="text/javascript">
+    //check local storage for user
+    if (localStorage.getItem("user") === null) {
+        //if no user, redirect to login page
+        window.location.href = "pages/login.htm";
+    } else {
+        const user = JSON.parse(localStorage.getItem("user"));
+
+        //if user is client, redirect to client page
+        if (user.accType === "client") {
+            window.location.href = "pages/homes/client_home.htm";
+        } else {
+            //if user is admin, redirect to admin page
+            window.location.href = "pages/homes/provider_home.htm";
+        }
+    }
+</script>

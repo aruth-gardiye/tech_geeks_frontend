@@ -1,0 +1,859 @@
+<!-- View Job Page for the Client -->
+<!-- Path: pages/job/view_job.htm -->
+
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>View Job</title>
+
+  <!-- Bootstrap -->
+  <link rel="stylesheet" href="../../utils/bootstrap-5.3/bootstrap.min.css" />
+  <script type='text/javascript' src="../../utils/bootstrap-5.3/bootstrap.bundle.min.js"></script>
+
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="../../utils/font-awesome-4.7.0/css/font-awesome.min.css">
+
+  <!-- JQuery -->
+  <script type='text/javascript' src="../../utils/jquery-3.7.1.min.js"></script>
+
+  <!-- Bootstrap Select wait for JQuery to load before loading -->
+  <link rel="stylesheet" href="../../utils/bootstrap-select-1.14.0-beta2/bootstrap-select.min.css" />
+  <script type='text/javascript' src="../../utils/bootstrap-select-1.14.0-beta2/bootstrap-select.min.js"></script>
+
+  <!-- Cleave
+  <script type='text/javascript' src="../../utls/cleave.min.js"></script>
+  <script type='text/javascript' src="../../utls/cleave-phone.au.js"></script>
+  <script type='text/javascript' src="../../utls/cleave_format.js"></script> -->
+
+  <!-- Toastr -->
+  <link rel="stylesheet" href="../../utils/toastr-2.1.1/toastr.min.css" />
+  <script type='text/javascript' src="../../utils/toastr-2.1.1/toastr.min.js"></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="../../utils/main.css" />
+
+  <script>
+    $(document).ready(function () {
+      $('.selectpicker').selectpicker({
+        size: 4
+      });
+    });
+  </script>
+
+  <script>
+    // function to clear the local storage and redirect to the login page
+    function clearLocalStorageAndRedirect() {
+      // Clear the local storage
+      localStorage.clear();
+
+      // Redirect to the login page
+      window.location.href = '../login.htm';
+    }
+  </script>
+
+  <!-- 
+      {
+      "job": {
+          "jobLocation": {
+              "address": "20 Seaview Street, Tweed Heads South New South Wales 2486, Australia",
+              "longitude": 153.518403,
+              "latitude": -28.206651
+          },
+          "jobDuration": {
+              "hours": 8,
+              "days": 0,
+              "months": 0,
+              "years": 0
+          },
+          "_id": "6514ff4f428a4bf71f06c990",
+          "jobName": "Example Job 01 Name Update",
+          "jobDescription": "Example Job 01 Description Updated",
+          "serviceName": "IT Support Level 1",
+          "jobType": "full-time",
+          "jobStartDate": "2023-09-27T14:00:00.000Z",
+          "jobEndDate": "2023-09-28T14:00:00.000Z",
+          "jobStatus": "completed",
+          "jobPrice": 40,
+          "jobOwner": {
+              "_id": "6514f7958a8ed8f82295df31",
+              "username": "johndoe_client",
+              "firstName": "John",
+              "lastName": "Doe"
+          },
+          "jobApplicants": [
+              {
+                  "userId": "6514f86d8a8ed8f82295df3a",
+                  "username": "jacksonpot_provider",
+                  "firstName": "Jackson",
+                  "lastName": "Pot",
+                  "bid": 37,
+                  "bidStatus": "assigned"
+              },
+              {
+                  "userId": "6514f8218a8ed8f82295df37",
+                  "username": "janedoe_provider",
+                  "firstName": "Jane",
+                  "lastName": "Doe",
+                  "bid": 40,
+                  "bidStatus": "submitted"
+              }
+          ],
+          "__v": 2,
+          "selectedBid": {
+              "_id": "6514f86d8a8ed8f82295df3a",
+              "username": "jacksonpot_provider",
+              "firstName": "Jackson",
+              "lastName": "Pot"
+          }
+      }
+  }
+  -->
+
+  <!-- Script to update selectedBid or jobStatus based on passed status -->
+  <script>
+    function updateSelectedBid(status, selectedBidId) {
+      // Get the job id from the url of the page
+      const urlParams = new URLSearchParams(window.location.search);
+      const jobId = urlParams.get('jobId');
+
+      // Get the job details from the database
+      $.ajax({
+        url: 'https://techgeeksprotobackend.azurewebsites.net/api/Job/getJobById/' + jobId,
+        type: 'GET',
+        success: function (data) {
+          // Parse the JSON data
+          var job = data.job;
+
+          // Check if the job details were retrieved successfully
+          if (job) {
+            // Check if the status is select
+            if (status === 'submitted') {
+
+              const jobId = job._id;
+              const selectedBid = selectedBidId;
+
+              let data = {
+                jobId,
+                selectedBid
+              };
+
+              data = JSON.stringify(data);
+
+              // Update the selected bid in the database
+              $.ajax({
+                url: 'https://techgeeksprotobackend.azurewebsites.net/api/Job/updateJob',
+                type: 'PATCH',
+                data: data,
+                contentType: 'application/json',
+                success: function (data) {
+                  // Parse the JSON data
+                  var job = data.job;
+
+                  // Check if the selected bid was updated successfully
+                  if (job) {
+                    // Display a success toast
+                    toastr.success('Bid Selected Successfully');
+
+                    // Reload the page after 2 seconds
+                    setTimeout(() => {
+                      window.location.reload();
+                    }, 2000);
+                  }
+                },
+                error: function (data) {
+                  if (data.responseJSON.error) {
+                    // Display an error toast
+                    toastr.error(data.responseJSON.error);
+                  }
+
+                  // Check if the selected bid was not updated successfully
+                  else {
+                    // Display an error toast
+                    toastr.error('Something went wrong. Please try again later.');
+                  }
+                }
+              });
+            }
+
+            // Check if the status is reject
+            else if (status === 'accepted') {
+
+              const jobId = job._id;
+              const selectedBid = selectedBidId;
+
+              let data = {
+                jobId,
+                selectedBid
+              };
+
+              data = JSON.stringify(data);
+              // Update the selected bid in the database
+              $.ajax({
+                url: 'https://techgeeksprotobackend.azurewebsites.net/api/Job/updateJob',
+                type: 'PATCH',
+                data: data,
+                contentType: 'application/json',
+                success: function (data) {
+                  // Parse the JSON data
+                  var job = data.job;
+
+                  // Check if the selected bid was updated successfully
+                  if (job) {
+                    // Display a success toast
+                    toastr.success('Selected Bid Rejected Successfully');
+
+                    // Redirect to the view job page
+                    window.location.href = `view_job.htm?jobId=${jobId}`;
+                  }
+                },
+                error: function (data) {
+                  if (data.responseJSON.error) {
+                    // Display an error toast
+                    toastr.error(data.responseJSON.error);
+                  }
+
+                  // Check if the selected bid was not updated successfully
+                  else {
+                    // Display an error toast
+                    toastr.error('Something went wrong. Please try again later.');
+                  }
+                }
+              });
+            }
+
+            // Check if the status is withdraw
+            else if (status === 'assigned') {
+
+              const jobId = job._id;
+              const jobStatus = "in-progress";
+
+              let data = {
+                jobId,
+                jobStatus
+              };
+
+              data = JSON.stringify(data);
+              console.log(data);
+
+              // Update the selected bid in the database
+              $.ajax({
+                url: 'https://techgeeksprotobackend.azurewebsites.net/api/Job/updateJob',
+                type: 'PATCH',
+                data: data,
+                contentType: 'application/json',
+                success: function (data) {
+                  // Parse the JSON data
+                  var job = data.job;
+
+                  // Check if the selected bid was updated successfully
+                  if (job) {
+                    // Display a success toast
+                    toastr.success('Job status changed to in-progress');
+
+                    // Redirect to the view job page
+                    window.location.href = `view_job.htm?jobId=${jobId}`;
+                  }
+                },
+                error: function (data) {
+                  if (data.responseJSON.error) {
+                    // Display an error toast
+                    toastr.error(data.responseJSON.error);
+                  }
+
+                  // Check if the selected bid was not updated successfully
+                  else {
+                    // Display an error toast
+                    toastr.error('Something went wrong. Please try again later.');
+                  }
+                }
+              });
+            }
+          }
+
+          // Check if the job details were not retrieved successfully
+          else if (job.error) {
+            // Display an error toast
+            toastr.error(job.error);
+          }
+
+          // Check if the job details were not retrieved successfully
+          else {
+            // Display an error toast
+            toastr.error(job.error);
+          }
+
+        }
+      });
+    }
+  </script>
+
+  <script>
+    // Function to get the job details
+    function getJobDetails() {
+      // Get the job id from the url of the page
+      const urlParams = new URLSearchParams(window.location.search);
+      const jobId = urlParams.get('jobId');
+
+      // Get the job details from the database
+      $.ajax({
+        url: 'https://techgeeksprotobackend.azurewebsites.net/api/Job/getJobById/' + jobId,
+        type: 'GET',
+        success: function (data) {
+          // Parse the JSON data
+          var job = data.job;
+
+          // Check if the job details were retrieved successfully
+          if (job) {
+            // get the container element for the job details
+            const jobDetailsContainer = document.getElementById('jobDetailsContainer');
+
+            // create a new row element
+            const row = document.createElement('div');
+            row.classList.add('row', 'mx-auto', 'mb-3', 'p-2', 'shadow', 'bg-light', 'text-center', 'rounded-3', 'text-secondary');
+
+            // create extra row to display jobStatus
+            const extraRow = document.createElement('div');
+            extraRow.classList.add('row', 'mx-auto', 'mb-2', 'p-0', 'text-center', 'text-secondary', 'justify-content-end');
+
+            // create a badge for the job status
+            const statusBadge = document.createElement('span');
+            statusBadge.classList.add('badge', 'mt-2', 'me-2', 'p-2');
+            if (job.jobStatus === 'available') {
+              statusBadge.classList.add('bg-success');
+            } else if (job.jobStatus === 'in-progress') {
+              statusBadge.classList.add('bg-info');
+            } else if (job.jobStatus === 'completed') {
+              statusBadge.classList.add('bg-warning');
+            }
+            statusBadge.style.width = 'auto';
+            statusBadge.textContent = job.jobStatus.toUpperCase();
+            extraRow.appendChild(statusBadge);
+
+            // append the extra row to the row
+            row.appendChild(extraRow);
+
+            // create first row for the job icon, job service name, address, duration, start date
+            const firstRow = document.createElement('div');
+            firstRow.classList.add('row', 'mt-3', 'mx-auto', 'mb-2');
+
+            // create a column for the job icon
+            const iconColumn = document.createElement('div');
+            iconColumn.classList.add('col-2');
+            const iconWrapper = document.createElement('div');
+            iconWrapper.classList.add('rounded-circle', 'bg-dark-subtle', 'd-flex', 'justify-content-center', 'align-items-center', 'p-2');
+            iconWrapper.style.width = '60px';
+            iconWrapper.style.height = '60px';
+            const icon = document.createElement('i');
+            icon.classList.add('fa', 'fa-suitcase', 'fa-lg', 'text-muted');
+            iconWrapper.appendChild(icon);
+            iconColumn.appendChild(iconWrapper);
+            firstRow.appendChild(iconColumn);
+
+            // create a column for hold the job service name, address, duration, start date
+            // service name first row, address second row, duration and start date third row
+            const detailsColumn = document.createElement('div');
+            detailsColumn.classList.add('col-auto', 'align-self-center', 'text-start', 'ms-3');
+
+            const jobName = document.createElement('h2');
+            jobName.classList.add('fs-6', 'mb-2', 'fw-bold');
+            jobName.textContent = job.jobName;
+            detailsColumn.appendChild(jobName);
+
+            const serviceName = document.createElement('h2');
+            serviceName.classList.add('fs-6', 'mb-2', 'fw-medium');
+            serviceName.textContent = job.serviceName;
+            detailsColumn.appendChild(serviceName);
+            const address = document.createElement('p');
+            address.classList.add('fs-6', 'fw-light');
+            const addressIcon = document.createElement('span');
+            addressIcon.classList.add('fa', 'fa-map-marker', 'me-1');
+            address.appendChild(addressIcon);
+            if (job.jobLocation.address.length > 68) {
+              address.appendChild(document.createTextNode(job.jobLocation.address.slice(0, 70) + '...'));
+            } else {
+              address.appendChild(document.createTextNode(job.jobLocation.address));
+            }
+            detailsColumn.appendChild(address);
+
+            // create a div for the duration and start date
+            const durationStartDate = document.createElement('div');
+            durationStartDate.classList.add('d-flex', 'justify-content-start', 'w-100');
+            const duration = document.createElement('p');
+            duration.classList.add('fs-6', 'fw-light', 'me-2');
+            const durationIcon = document.createElement('span');
+            durationIcon.classList.add('fa', 'fa-clock-o', 'me-1');
+            duration.appendChild(durationIcon);
+            // calculate the duration and display it in a understandable format
+            const durationInHours = job.jobDuration.hours + (job.jobDuration.days * 24) + (job.jobDuration.months * 30 * 24) + (job.jobDuration.years * 365 * 24);
+            // hours
+            if (durationInHours < 24) {
+              duration.appendChild(document.createTextNode(`${durationInHours} hrs`));
+            }
+            // hours and days
+            else if (durationInHours < 24 * 30) {
+              const days = Math.floor(durationInHours / 24);
+              const hours = durationInHours % 24;
+              duration.appendChild(document.createTextNode(`${days} days ${hours} hrs`));
+            }
+            // hours, days and months
+            else if (durationInHours < 24 * 30 * 12) {
+              const months = Math.floor(durationInHours / (24 * 30));
+              const days = Math.floor((durationInHours % (24 * 30)) / 24);
+              const hours = (durationInHours % (24 * 30)) % 24;
+              duration.appendChild(document.createTextNode(`${months} months ${days} days ${hours} hrs`));
+            }
+            // hours, days, months and years
+            else {
+              const years = Math.floor(durationInHours / (24 * 30 * 12));
+              const months = Math.floor((durationInHours % (24 * 30 * 12)) / (24 * 30));
+              const days = Math.floor(((durationInHours % (24 * 30 * 12)) % (24 * 30)) / 24);
+              const hours = ((durationInHours % (24 * 30 * 12)) % (24 * 30)) % 24;
+              duration.appendChild(document.createTextNode(`${years} years ${months} months ${days} days ${hours} hrs`));
+            }
+            durationStartDate.appendChild(duration);
+            const jobType = document.createElement('p');
+            jobType.classList.add('fs-6', 'fw-light', 'ms-4', 'me-4');
+            const jobTypeIcon = document.createElement('span');
+            jobTypeIcon.classList.add('fa', 'fa-black-tie', 'me-1');
+            jobType.appendChild(jobTypeIcon);
+            jobType.appendChild(document.createTextNode(job.jobType.charAt(0).toUpperCase() + job.jobType.slice(1)));
+            const startDate = document.createElement('p');
+            startDate.classList.add('fs-6', 'fw-light', 'ms-5');
+            const startDateIcon = document.createElement('span');
+            startDateIcon.classList.add('fa', 'fa-calendar-times-o', 'me-1');
+            startDate.appendChild(startDateIcon);
+            startDate.appendChild(document.createTextNode(new Date(job.jobStartDate).toDateString()));
+            durationStartDate.appendChild(jobType);
+            durationStartDate.appendChild(startDate);
+            const endDate = document.createElement('p');
+            endDate.classList.add('fs-6', 'fw-light', 'ms-4');
+            const endDateIcon = document.createElement('span');
+            endDateIcon.classList.add('fa', 'fa-calendar-check-o', 'me-1');
+            endDate.appendChild(endDateIcon);
+            endDate.appendChild(document.createTextNode(new Date(job.jobEndDate).toDateString()));
+            durationStartDate.appendChild(endDate);
+            detailsColumn.appendChild(durationStartDate);
+
+            firstRow.appendChild(detailsColumn);
+
+            //add dividers
+            const divider = document.createElement('hr');
+            divider.classList.add('my-2', 'mx-auto', 'border-secondary-subtle');
+            firstRow.appendChild(divider);
+
+            // append the first row to the row
+            row.appendChild(firstRow);
+
+            // create second row for bid details
+            const secondRow = document.createElement('div');
+            secondRow.classList.add('row', 'mt-2', 'mx-auto', 'mb-2');
+
+            // create a column for the bid details
+            const bidDetailsColumn = document.createElement('div');
+            bidDetailsColumn.classList.add('col-auto', 'w-100', 'align-self-center', 'text-start', 'rounded-3', 'p-2', 'mb-3', 'shadow');
+
+
+            // create a div for the selected bid details
+            if (job.selectedBid) {
+              // create "Selected Bid" header
+              const selectedBidHeader = document.createElement('h2');
+              selectedBidHeader.classList.add('mb-1', 'fs-5', 'mb-2', 'fw-bold', 'd-flex', 'justify-content-center', 'align-items-center', 'py-2');
+              const selectedBidIcon = document.createElement('span');
+              selectedBidIcon.classList.add('fa', 'fa-handshake-o', 'me-2');
+              selectedBidHeader.appendChild(selectedBidIcon);
+              selectedBidHeader.appendChild(document.createTextNode('Selected Bid'));
+              bidDetailsColumn.appendChild(selectedBidHeader);
+
+              const bidDetails = document.createElement('div');
+              bidDetails.classList.add('d-flex', 'justify-content-center', 'align-items-center', 'w-100', 'mb-3', 'text-dark');
+
+              // create a rounded div for the bid amount
+              const bidAmountDiv = document.createElement('div');
+              bidAmountDiv.classList.add('rounded-3', 'bg-success', 'py-1', 'px-2', 'me-2');
+              const bid = document.createElement('p');
+              bid.classList.add('fs-6', 'fw-medium', 'm-0', 'text-white');
+              const bidIcon = document.createElement('span');
+              bidIcon.classList.add('fa', 'fa-money', 'me-2', 'text-white');
+              bid.appendChild(bidIcon);
+              // get the bid amount from JobApplicants array matching the selected bid id
+              const selectedBid = job.jobApplicants.find(jobApplicant => jobApplicant.userId === job.selectedBid._id);
+              bid.appendChild(document.createTextNode(`$${selectedBid.bid}`));
+              bidAmountDiv.appendChild(bid);
+
+              // create a rounded div for the selected bid details
+              const bidDetailsDiv = document.createElement('div');
+              bidDetailsDiv.classList.add('rounded-3', 'bg-warning', 'py-1', 'px-2');
+              const bidStatus = document.createElement('p');
+              bidStatus.classList.add('fs-6', 'fw-light', 'm-0');
+              const bidStatusIcon = document.createElement('span');
+              bidStatusIcon.classList.add('fa', 'fa-user', 'me-1');
+              bidStatus.appendChild(bidStatusIcon);
+              const bidStatusText = document.createElement('span');
+              bidStatusText.classList.add('font-weight-bold');
+              bidStatusText.appendChild(document.createTextNode(`${selectedBid.firstName} ${selectedBid.lastName}`));
+              bidStatus.appendChild(bidStatusText);
+              bidDetailsDiv.appendChild(bidStatus);
+
+              // append the rounded divs to the bid details div
+              bidDetails.appendChild(bidAmountDiv);
+              bidDetails.appendChild(bidDetailsDiv);
+
+              bidDetailsColumn.appendChild(bidDetails);
+            }
+            else {
+              const bidStatus = document.createElement('p');
+              bidStatus.classList.add('fs-6', 'fw-medium', 'm-2', 'text-muted', 'align-self-center', 'text-center', 'w-100');
+              const bidStatusIcon = document.createElement('span');
+              bidStatusIcon.classList.add('fa', 'fa-meh-o', 'me-2');
+              bidStatus.appendChild(bidStatusIcon);
+              bidStatus.appendChild(document.createTextNode('No Selected Bid yet'));
+              bidDetailsColumn.appendChild(bidStatus);
+            }
+
+            secondRow.appendChild(bidDetailsColumn);
+
+            //add dividers
+            const divider2 = document.createElement('hr');
+            divider2.classList.add('my-2', 'mx-auto', 'border-secondary-subtle');
+            secondRow.appendChild(divider2);
+
+            // append the second row to the row
+            row.appendChild(secondRow);
+
+            // create extra row for the jobApplicants
+            if (job.jobApplicants.length > 0) {
+              // create a scrollable div for the job applicants
+              // it should be scrollable if there are more than 3 job applicants
+              // contains a row for each job applicant with their details (First name, last name, bid, bid status)
+
+              // create a column for the job applicants
+              const jobApplicantsColumn = document.createElement('div');
+
+              // create "Job Applicants" header
+              const jobApplicantsHeader = document.createElement('h2');
+              jobApplicantsHeader.classList.add('ms-3', 'mt-3', 'mb-1', 'fs-6', 'mb-2', 'fw-bold', 'd-flex', 'align-items-center');
+              const jobApplicantsIcon = document.createElement('span');
+              jobApplicantsIcon.classList.add('fa', 'fa-users', 'me-2');
+              jobApplicantsHeader.appendChild(jobApplicantsIcon);
+              jobApplicantsHeader.appendChild(document.createTextNode('Job Applicants'));
+
+              // append the job applicants header to the job applicants column
+              jobApplicantsColumn.appendChild(jobApplicantsHeader);
+
+              // create an accordion for the job applicants
+              const accordion = document.createElement('div');
+              accordion.classList.add('accordion');
+
+              // create an accordion item for each job applicant
+              job.jobApplicants.forEach((applicant, index) => {
+                // create an accordion item
+                const accordionItem = document.createElement('div');
+                accordionItem.classList.add('accordion-item');
+
+                // create an accordion header
+                const accordionHeader = document.createElement('h2');
+                accordionHeader.id = `heading${index}`;
+                accordionHeader.classList.add('accordion-header');
+
+                // create an accordion button
+                const accordionButton = document.createElement('button');
+                accordionButton.classList.add('accordion-button', 'collapsed');
+                accordionButton.type = 'button';
+                accordionButton.setAttribute('data-bs-toggle', 'collapse');
+                accordionButton.setAttribute('data-bs-target', `#collapse${index}`);
+                accordionButton.setAttribute('aria-expanded', 'false');
+                accordionButton.setAttribute('aria-controls', `collapse${index}`);
+                accordionButton.innerHTML = `
+                <div class="d-flex justify-content-between w-100">
+                  <div class="col-2">
+                  <span class="me-2">${applicant.firstName} ${applicant.lastName}</span>
+                  </div>
+                  <div class="col-2">
+                  <span class="badge bg-success">$${applicant.bid}</span>
+                  </div>
+                  <div class="col-2">
+                  <span class="badge bg-dark">${applicant.bidStatus.toUpperCase()}</span>
+                  </div>
+                </div>
+                `;
+
+                // append the accordion button to the accordion header
+                accordionHeader.appendChild(accordionButton);
+
+                // create a accordion collapse
+                const accordionCollapse = document.createElement('div');
+                accordionCollapse.id = `collapse${index}`;
+                accordionCollapse.classList.add('accordion-collapse', 'collapse');
+                accordionCollapse.setAttribute('aria-labelledby', `heading${index}`);
+                accordionCollapse.setAttribute('data-bs-parent', '#accordionExample');
+
+                // create a accordion body
+                const accordionBody = document.createElement('div');
+                accordionBody.classList.add('accordion-body');
+
+                // create a row for the job applicant details
+                const jobApplicantRow = document.createElement('div');
+                jobApplicantRow.classList.add('row', 'mx-auto', 'mb-2', 'justify-content-center', 'align-items-center', 'w-100');
+
+                // create a column for the job applicant bid
+                const jobApplicantBidColumn = document.createElement('div');
+                jobApplicantBidColumn.classList.add('col-auto', 'align-self-center', 'text-start', 'ms-3');
+
+                // create a div for the job applicant bid
+                const jobApplicantBid = document.createElement('div');
+                jobApplicantBid.classList.add('w-100', 'fs-6');
+                const jobApplicantBidIcon = document.createElement('span');
+                jobApplicantBidIcon.classList.add('fa', 'fa-money', 'me-1');
+                jobApplicantBid.appendChild(jobApplicantBidIcon);
+                jobApplicantBid.appendChild(document.createTextNode(`$${applicant.bid}`));
+                jobApplicantBidColumn.appendChild(jobApplicantBid);
+
+                // append the job applicant bid column to the row
+                jobApplicantRow.appendChild(jobApplicantBidColumn);
+
+                // create a column for the job applicant bid status
+                const jobApplicantBidStatusColumn = document.createElement('div');
+                jobApplicantBidStatusColumn.classList.add('col-auto', 'align-self-center', 'text-start', 'ms-3');
+
+                // create a div for the job applicant bid status
+                const jobApplicantBidStatus = document.createElement('div');
+                jobApplicantBidStatus.classList.add('d-flex', 'justify-content-start', 'w-100');
+                const jobApplicantBidStatusButton = document.createElement('button');
+                jobApplicantBidStatusButton.classList.add('btn', `btn-dark`, 'me-1');
+                // if jobStatus is completed, disable the button
+                if (job.jobStatus === 'completed') {
+                  jobApplicantBidStatusButton.disabled = true;
+                }
+                if (applicant.bidStatus === 'submitted') {
+                  jobApplicantBidStatusButton.innerText = 'Select';
+                  jobApplicantBidStatusButton.classList.replace('btn-dark', 'btn-success');
+                  //handle the click event for the select button
+                  jobApplicantBidStatusButton.addEventListener('click', () => {
+                    updateSelectedBid('submitted', applicant.userId);
+                  });
+                } else if (applicant.bidStatus === 'accepted') {
+                  jobApplicantBidStatusButton.innerText = 'Reject';
+                  jobApplicantBidStatusButton.classList.replace('btn-dark', 'btn-danger');
+                  //handle the click event for the reject button
+                  jobApplicantBidStatusButton.addEventListener('click', () => {
+                    updateSelectedBid('accepted', applicant.userId);
+                  });
+                } else if (applicant.bidStatus === 'assigned') {
+                  jobApplicantBidStatusButton.innerText = 'Start Job';
+                  jobApplicantBidStatusButton.classList.replace('btn-dark', 'btn-info');
+                  //handle the click event for the start job button
+                  jobApplicantBidStatusButton.addEventListener('click', () => {
+                    updateSelectedBid('assigned', applicant.userId);
+                  });
+                } else if (applicant.bidStatus === 'withdrawn') {
+                  jobApplicantBidStatusButton.innerText = 'Withdrawn';
+                  jobApplicantBidStatusButton.classList.replace('btn-dark', 'btn-secondary');
+                  jobApplicantBidStatusButton.disabled = true;
+                }
+                jobApplicantBidStatus.appendChild(jobApplicantBidStatusButton);
+                jobApplicantBidStatusColumn.appendChild(jobApplicantBidStatus);
+
+                // append the job applicant bid status column to the row
+                jobApplicantRow.appendChild(jobApplicantBidStatusColumn);
+
+                // append the job applicant row to the accordion body
+                accordionBody.appendChild(jobApplicantRow);
+
+                // append the accordion body to the accordion collapse
+                accordionCollapse.appendChild(accordionBody);
+
+                // append the accordion header to the accordion item
+                accordionItem.appendChild(accordionHeader);
+
+                // append the accordion collapse to the accordion item
+                accordionItem.appendChild(accordionCollapse);
+
+                // append the accordion item to the accordion
+                accordion.appendChild(accordionItem);
+              });
+
+              // append the accordion to the job applicants column
+              jobApplicantsColumn.appendChild(accordion);
+
+              // add dividers
+              const divider3 = document.createElement('hr');
+              divider3.classList.add('mt-4', 'my-2', 'mx-auto', 'border-secondary-subtle');
+              jobApplicantsColumn.appendChild(divider3);
+
+              // append the job applicants column to the row
+              row.appendChild(jobApplicantsColumn);
+            }
+
+            // create extra row for the jobDescription
+            const extraRow2 = document.createElement('div');
+            extraRow2.classList.add('row', 'mx-auto', 'mb-2', 'p-0', 'text-center', 'text-secondary', 'justify-content-end');
+
+            // create a column for the job description
+            const jobDescriptionColumn = document.createElement('div');
+            jobDescriptionColumn.classList.add('col-auto', 'w-100', 'align-self-center', 'text-start', 'ms-3');
+
+            // create "Job Applicants" header
+            const jobDescriptionHeader = document.createElement('h2');
+            jobDescriptionHeader.classList.add('ms-3', 'mt-3', 'mb-1', 'fs-6', 'mb-2', 'fw-bold', 'd-flex', 'align-items-center');
+            const jobDescriptionIcon = document.createElement('span');
+            jobDescriptionIcon.classList.add('fa', 'fa-file-text-o', 'me-2');
+            jobDescriptionHeader.appendChild(jobDescriptionIcon);
+            jobDescriptionHeader.appendChild(document.createTextNode('Job Description'));
+
+            // append the job applicants header to the job applicants column
+            jobDescriptionColumn.appendChild(jobDescriptionHeader);
+
+            // create a div for the job description
+            const jobDescription = document.createElement('div');
+            jobDescription.classList.add('ms-2', 'fs-6', 'px-2', 'text-dark');
+            jobDescription.appendChild(document.createTextNode(job.jobDescription));
+            jobDescriptionColumn.appendChild(jobDescription);
+
+            // add dividers
+            const divider4 = document.createElement('hr');
+            divider4.classList.add('mt-4', 'my-2', 'mx-auto', 'border-secondary-subtle');
+            jobDescriptionColumn.appendChild(divider4);
+
+            // append the job description column to the row
+            extraRow2.appendChild(jobDescriptionColumn);
+
+            // append the extra row to the row
+            row.appendChild(extraRow2);
+
+            // create third row for the job price and job status
+            // job price first column, job status second column
+            const thirdRow = document.createElement('div');
+            thirdRow.classList.add('row', 'd-flex', 'mt-1', 'mb-1', 'justify-content-between', 'mx-auto', 'mb-2');
+
+            // create a column for the job price
+            const priceColumn = document.createElement('div');
+            priceColumn.classList.add('col-6', 'mt-2');
+            const price = document.createElement('p');
+            price.classList.add('fs-5', 'fw-bolder', 'text-dark');
+            price.textContent = `$${job.jobPrice}`;
+            const perHour = document.createElement('span');
+            perHour.classList.add('fs-6', 'text-secondary', 'ms-1', 'fw-medium');
+            perHour.textContent = 'Per hour';
+            price.appendChild(perHour);
+            priceColumn.appendChild(price);
+            thirdRow.appendChild(priceColumn);
+
+            // create a column for the job status
+            const statusColumn = document.createElement('div');
+            statusColumn.classList.add('col-6');
+            const status = document.createElement('button');
+            status.classList.add('btn', 'btn-lg', 'shadow', 'btn-dark', 'text-uppercase');
+            status.textContent = job.jobStatus;
+            statusColumn.appendChild(status);
+            thirdRow.appendChild(statusColumn);
+
+            // append the third row to the row
+            row.appendChild(thirdRow);
+
+            // append the row to the job list container
+            jobDetailsContainer.appendChild(row);
+          }
+
+          // Check if the job details were not retrieved successfully
+          else if (jobDetails.error) {
+            // Display an error toast
+            toastr.error(jobDetails.error);
+          }
+
+          // Check if the job details were not retrieved successfully
+          else {
+            // Display an error toast
+            toastr.error(jobDetails.error);
+          }
+
+        }
+      });
+    }
+  </script>
+
+  <script>
+    // call the function to get the job details when the page is loaded
+    $(document).ready(function () {
+      // Get the first name of the user from the local storage
+      const user = JSON.parse(localStorage.getItem('user'));
+      const firstName = user.firstName;
+
+      // Set the first name of the user in the page
+      document.getElementById('firstName').textContent = firstName;
+
+      // Set the current date in the page
+      document.getElementById('currentDate').textContent = new Date().toDateString();
+
+      // Get the job details
+      getJobDetails();
+    });
+  </script>
+
+</head>
+
+<body class="bg-light text-dark">
+
+  <!-- Top section  -->
+  <div id="job_details_container" class="container-fluid bg-light text-dark pt-2 col-7">
+    <!-- Header -->
+    <div class="row">
+      <!-- Welcom messege to left -->
+      <div class="col-6">
+        <h1 class="fs-6 fw-medium">Hi,</h1>
+        <h1 id="firstName" class="fs-5">Client</h1>
+      </div>
+
+      <!-- Nav -->
+      <div class="col-6 text-end">
+        <!-- Hamburger menu -->
+        <div class="dropdown">
+          <button class="btn btn-outline-dark btn-sm dropdown-toggle" type="button" id="dropdownMenuButton"
+            data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fa fa-bars"></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton">
+            <li>
+              <button class="dropdown-item" type="button" onclick="clearLocalStorageAndRedirect()">Log Out</button>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Back button -->
+    <div class="row mt-5 mb-2">
+      <div class="col-12">
+        <div class="input-group mb-3 shadow rounded-pill">
+          <button class="btn border-0 w-100 shadow-none me-2 text-body-secondary" type="button"
+            onclick="window.location.href='/pages/homes/client_home.htm'"><i class="fa fa-chevron-left"></i> Go
+            Back</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Details of job -->
+    <div class="row mx-auto mt-4 mb-2">
+      <!-- Your Job -->
+      <div class="col-6">
+        <h1 class="fs-6 fw-medium">Your Job Details</h1>
+      </div>
+      <!-- Current Date to right -->
+      <div class="col-6 text-end">
+        <h1 class="fs-6 fw-light text-body-secondary">
+          <!-- date with date icon -->
+          <i class="fa fa-calendar me-2"></i> <span id="currentDate"></span>
+        </h1>
+      </div>
+    </div>
+    <div class="row shadow-none bg-light text-center rounded">
+      <div class="col-12" id="jobDetailsContainer">
+      </div>
+    </div>
+  </div>
+
+
+  </div>
+
+</body>

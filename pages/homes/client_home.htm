@@ -1,0 +1,735 @@
+<!-- Home page for clients -->
+<!-- Path: pages/homes/client_home.htm -->
+
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Home</title>
+
+  <!-- Bootstrap -->
+  <link rel="stylesheet" href="../../utils/bootstrap-5.3/bootstrap.min.css" />
+  <script type='text/javascript' src="../../utils/bootstrap-5.3/bootstrap.bundle.min.js"></script>
+
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="../../utils/font-awesome-4.7.0/css/font-awesome.min.css">
+
+  <!-- JQuery -->
+  <script type='text/javascript' src="../../utils/jquery-3.7.1.min.js"></script>
+
+  <!-- Bootstrap Select wait for JQuery to load before loading -->
+  <link rel="stylesheet" href="../../utils/bootstrap-select-1.14.0-beta2/bootstrap-select.min.css" />
+  <script type='text/javascript' src="../../utils/bootstrap-select-1.14.0-beta2/bootstrap-select.min.js"></script>
+
+  <!-- Cleave
+  <script type='text/javascript' src="../../utls/cleave.min.js"></script>
+  <script type='text/javascript' src="../../utls/cleave-phone.au.js"></script>
+  <script type='text/javascript' src="../../utls/cleave_format.js"></script> -->
+
+  <!-- Toastr -->
+  <link rel="stylesheet" href="../../utils/toastr-2.1.1/toastr.min.css" />
+  <script type='text/javascript' src="../../utils/toastr-2.1.1/toastr.min.js"></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="../../utils/main.css" />
+
+  <script>
+    $(document).ready(function () {
+      $('.selectpicker').selectpicker({
+        size: 4
+      });
+    });
+  </script>
+
+  <script>
+    // function to clear the local storage and redirect to the login page
+    function clearLocalStorageAndRedirect() {
+      // Clear the local storage
+      localStorage.clear();
+
+      // Redirect to the login page
+      window.location.href = '../login.htm';
+    }
+  </script>
+
+  <script type='text/javascript'>
+    $(document).ready(function () {
+
+      // make use of local storage to get current user details
+      //   {
+      //     "message": "Login successful",
+      //     "user": {
+      //         "_id": "6514f7958a8ed8f82295df31",
+      //         "username": "johndoe_client",
+      //         "email": "johndoe@example.com",
+      //         "accType": "client",
+      //         "firstName": "John",
+      //         "lastName": "Doe",
+      //         "tel": "0512345678",
+      //         "location": [
+      //             {
+      //                 "address": "20 Seaview Street, Byron Bay New South Wales 2481, Australia",
+      //                 "longitude": 153.616961,
+      //                 "latitude": -28.652513
+      //             }
+      //         ],
+      //         "serviceNames": [],
+      //         "avatar": null,
+      //         "onBoarded": false,
+      //         "verified": false
+      //     }
+      // }
+
+      // get the current user from local storage
+      const currentUser = JSON.parse(localStorage.getItem('user'));
+      // check if the user is logged in
+      if (currentUser === null) {
+        // redirect to login page
+        window.location.href = '../login.htm';
+
+        return;
+      } else {
+        // set the first name of the user
+        document.querySelector('#firstName').textContent = currentUser.firstName;
+      }
+
+      // get current date
+      const currentDate = new Date();
+      // set the current date
+      document.querySelector('#currentDate').textContent = currentDate.toDateString();
+
+      getJobs('all-jobs');
+
+    });
+  </script>
+
+  <!-- On click handler for updating jobListContainer -->
+  <script type='text/javascript'>
+    //depending on the button clicked, update the jobListContainer
+    const getJobs = (buttonId) => {
+
+      // get the current user from local storage
+      const currentUser = JSON.parse(localStorage.getItem('user'));
+
+      // get the jobListContainer
+      const jobListContainer = document.querySelector('#jobListContainer');
+
+      //clear the jobListContainer
+      jobListContainer.innerHTML = "";
+
+      // depend on the button clicked, update the jobListContainer
+      // url if the user clicks on the available jobs button
+      if (buttonId === "all-jobs"){
+        //make button active
+        document.getElementById("all-jobs").classList.add("active", "bg-secondary-subtle");
+        //make other buttons inactive
+        document.getElementById("bid-jobs").classList.remove("active", "bg-secondary-subtle");
+        document.getElementById("selected-jobs").classList.remove("active", "bg-secondary-subtle");
+        document.getElementById("assigned-jobs").classList.remove("active", "bg-secondary-subtle");
+        document.getElementById("in-progress-jobs").classList.remove("active", "bg-secondary-subtle");
+        document.getElementById("completed-jobs").classList.remove("active", "bg-secondary-subtle");
+        url = `https://techgeeksprotobackend.azurewebsites.net/api/Job/getAllJobsByClient/${currentUser._id}?&sort=jobStartDate:desc`;
+      }
+      // url if the user clicks on the bid jobs button
+      else if (buttonId === "bid-jobs"){
+        //make button active
+        document.getElementById("bid-jobs").classList.add("active", "bg-secondary-subtle");
+        //make other buttons inactive
+        document.getElementById("all-jobs").classList.remove("active", "bg-secondary-subtle");
+        document.getElementById("selected-jobs").classList.remove("active", "bg-secondary-subtle");
+        document.getElementById("assigned-jobs").classList.remove("active", "bg-secondary-subtle");
+        document.getElementById("in-progress-jobs").classList.remove("active", "bg-secondary-subtle");
+        document.getElementById("completed-jobs").classList.remove("active", "bg-secondary-subtle");
+        url = `https://techgeeksprotobackend.azurewebsites.net/api/Job/getAllJobsByClient/${currentUser._id}?filter=jobStatus:available&sort=jobStartDate:desc`;
+      }
+      // url if the user clicks on the confirm jobs button
+      else if (buttonId === "selected-jobs"){
+        //make button active
+        document.getElementById("selected-jobs").classList.add("active", "bg-secondary-subtle");
+        //make other buttons inactive
+        document.getElementById("all-jobs").classList.remove("active", "bg-secondary-subtle");
+        document.getElementById("bid-jobs").classList.remove("active", "bg-secondary-subtle");
+        document.getElementById("assigned-jobs").classList.remove("active", "bg-secondary-subtle");
+        document.getElementById("in-progress-jobs").classList.remove("active", "bg-secondary-subtle");
+        document.getElementById("completed-jobs").classList.remove("active", "bg-secondary-subtle");
+        url = `https://techgeeksprotobackend.azurewebsites.net/api/Job/getAllJobsByClient/${currentUser._id}?filter=jobStatus:accepted&sort=jobStartDate:desc`;
+      }
+      // url if the user clicks on the assigned jobs button
+      else if (buttonId === "assigned-jobs"){
+        //make button active
+        document.getElementById("assigned-jobs").classList.add("active", "bg-secondary-subtle");
+        //make other buttons inactive
+        document.getElementById("all-jobs").classList.remove("active", "bg-secondary-subtle");
+        document.getElementById("bid-jobs").classList.remove("active", "bg-secondary-subtle");
+        document.getElementById("selected-jobs").classList.remove("active", "bg-secondary-subtle");
+        document.getElementById("in-progress-jobs").classList.remove("active", "bg-secondary-subtle");
+        document.getElementById("completed-jobs").classList.remove("active", "bg-secondary-subtle");
+        url = `https://techgeeksprotobackend.azurewebsites.net/api/Job/getAllJobsByClient/${currentUser._id}?filter=jobStatus:assigned&sort=jobStartDate:desc`;
+      }
+      // url if the user clicks on the in-progress jobs button
+      else if (buttonId === "in-progress-jobs"){
+        //make button active
+        document.getElementById("in-progress-jobs").classList.add("active", "bg-secondary-subtle");
+        //make other buttons inactive
+        document.getElementById("all-jobs").classList.remove("active", "bg-secondary-subtle");
+        document.getElementById("bid-jobs").classList.remove("active", "bg-secondary-subtle");
+        document.getElementById("selected-jobs").classList.remove("active", "bg-secondary-subtle");
+        document.getElementById("assigned-jobs").classList.remove("active", "bg-secondary-subtle");
+        document.getElementById("completed-jobs").classList.remove("active", "bg-secondary-subtle");
+        url = `https://techgeeksprotobackend.azurewebsites.net/api/Job/getAllJobsByClient/${currentUser._id}?filter=jobStatus:in-progress&sort=jobStartDate:desc`;
+      }
+      // url if the user clicks on the completed jobs button
+      else if (buttonId === "completed-jobs"){
+        //make button active
+        document.getElementById("completed-jobs").classList.add("active", "bg-secondary-subtle");
+        //make other buttons inactive
+        document.getElementById("all-jobs").classList.remove("active", "bg-secondary-subtle");
+        document.getElementById("bid-jobs").classList.remove("active", "bg-secondary-subtle");
+        document.getElementById("selected-jobs").classList.remove("active", "bg-secondary-subtle");
+        document.getElementById("assigned-jobs").classList.remove("active", "bg-secondary-subtle");
+        document.getElementById("in-progress-jobs").classList.remove("active", "bg-secondary-subtle");
+        url = `https://techgeeksprotobackend.azurewebsites.net/api/Job/getAllJobsByClient/${currentUser._id}?filter=jobStatus:completed&sort=jobStartDate:desc`;
+      }
+
+      //create ajax request to get the jobs
+      $.ajax({
+        url: url,
+        type: 'GET',
+        success: function (response) {
+
+          // check if there are any jobs
+          if (response.jobs.length === 0) {
+
+            // create a new element with the placeholder image
+            const placeholderImage = document.createElement('img');
+            placeholderImage.src = '../../images/no_jobs.png';
+
+            //size of the image
+            placeholderImage.style.width = '300px';
+            placeholderImage.alt = 'Placeholder Image';
+            placeholderImage.classList.add('img-fluid', 'mx-auto', 'd-block', 'my-5');
+            jobListContainer.appendChild(placeholderImage);
+
+            // create a new element with the placeholder message
+            const placeholderMessage = document.createElement('p');
+            placeholderMessage.classList.add('text-muted', 'fs-5', 'fw-bold', 'mb-3');
+            if (buttonId === "all-jobs"){
+              placeholderMessage.textContent = 'No jobs posted yet!';
+            }
+            else if (buttonId === "bid-jobs"){
+              placeholderMessage.textContent = 'No jobs with bids yet!';
+            }
+            else if (buttonId === "selected-jobs"){
+              placeholderMessage.textContent = 'No jobs with selected bids yet!';
+            }
+            else if (buttonId === "assigned-jobs"){
+              placeholderMessage.textContent = 'You haven\'t assigned any jobs yet!';
+            }
+            else if (buttonId === "in-progress-jobs"){
+              placeholderMessage.textContent = 'You haven\'t started any jobs yet!';
+            }
+            else if (buttonId === "completed-jobs"){
+              placeholderMessage.textContent = 'You haven\'t completed any jobs yet!';
+            }
+            jobListContainer.appendChild(placeholderMessage);
+
+            // create a new element with the call to action message
+            const callToAction = document.createElement('p');
+
+            callToAction.classList.add('text-muted', 'fs-6', 'fw-light', 'mb-4');
+            if (buttonId === "all-jobs"){
+              callToAction.textContent = 'Post a job to get your work done easily.';
+            }
+            else if (buttonId === "bid-jobs"){
+              callToAction.textContent = 'Post a job to get your work done easily.';
+            }
+            else if (buttonId === "selected-jobs"){
+              callToAction.textContent = 'Post a job to get your work done easily.';
+            }
+            else if (buttonId === "assigned-jobs"){
+              callToAction.textContent = 'Post a job to get your work done easily.';
+            }
+            else if (buttonId === "in-progress-jobs"){
+              callToAction.textContent = 'Post a job to get your work done easily.';
+            }
+            else if (buttonId === "completed-jobs"){
+              callToAction.textContent = 'Post a job to get your work done easily.';
+            }
+            jobListContainer.appendChild(callToAction);
+
+            // create a new element with the go to available jobs button
+            const goToAvailableDiv = document.createElement('div');
+            goToAvailableDiv.classList.add('d-grid', 'gap-2', 'col-6', 'col-md-4', 'mx-auto', 'mb-5');
+            const goToAvailable = document.createElement('a');
+            goToAvailable.classList.add('btn', 'btn-lg', 'btn-dark', 'rounded');
+            goToAvailable.href = '/pages/job/create_job.htm';
+            goToAvailable.textContent = 'Post a Job';
+            goToAvailableDiv.appendChild(goToAvailable);
+            jobListContainer.appendChild(goToAvailableDiv);
+          } 
+
+          // if the user clicks on the bid-jobs button and there are no jobs with bids
+          else if (buttonId === "bid-jobs" && response.jobs.filter(job => job.jobApplicants.length > 0).length === 0) {
+
+            // create a new element with the placeholder image
+            const placeholderImage = document.createElement('img');
+            placeholderImage.src = '../../images/no_jobs.png';
+
+            //size of the image
+            placeholderImage.style.width = '300px';
+            placeholderImage.alt = 'Placeholder Image';
+            placeholderImage.classList.add('img-fluid', 'mx-auto', 'd-block', 'my-5');
+            jobListContainer.appendChild(placeholderImage);
+
+            // create a new element with the placeholder message
+            const placeholderMessage = document.createElement('p');
+            placeholderMessage.classList.add('text-muted', 'fs-5', 'fw-bold', 'mb-3');
+
+            if (buttonId === "all-jobs"){
+              placeholderMessage.textContent = 'No jobs posted yet!';
+            }
+            else if (buttonId === "bid-jobs"){
+              placeholderMessage.textContent = 'No available jobs with bids yet!';
+            }
+            else if (buttonId === "selected-jobs"){
+              placeholderMessage.textContent = 'No jobs with selected bids yet!';
+            }
+            else if (buttonId === "assigned-jobs"){
+              placeholderMessage.textContent = 'You haven\'t assigned any jobs yet!';
+            }
+            else if (buttonId === "in-progress-jobs"){
+              placeholderMessage.textContent = 'You haven\'t started any jobs yet!';
+            }
+            else if (buttonId === "completed-jobs"){
+              placeholderMessage.textContent = 'You haven\'t completed any jobs yet!';
+            }
+            jobListContainer.appendChild(placeholderMessage);
+
+            // create a new element with the call to action message
+            const callToAction = document.createElement('p');
+
+            callToAction.classList.add('text-muted', 'fs-6', 'fw-light', 'mb-4');
+            if (buttonId === "all-jobs"){
+              callToAction.textContent = 'Post a job to get your work done easily.';
+            }
+            else if (buttonId === "bid-jobs"){
+              callToAction.textContent = 'Post a job to get your work done easily.';
+            }
+            else if (buttonId === "selected-jobs"){
+              callToAction.textContent = 'Post a job to get your work done easily.';
+            }
+            else if (buttonId === "assigned-jobs"){
+              callToAction.textContent = 'Post a job to get your work done easily.';
+            }
+            else if (buttonId === "in-progress-jobs"){
+              callToAction.textContent = 'Post a job to get your work done easily.';
+            }
+            else if (buttonId === "completed-jobs"){
+              callToAction.textContent = 'Post a job to get your work done easily.';
+            }
+            jobListContainer.appendChild(callToAction);
+
+            // create a new element with the go to available jobs button
+            const goToAvailableDiv = document.createElement('div');
+            goToAvailableDiv.classList.add('d-grid', 'gap-2', 'col-6', 'col-md-4', 'mx-auto', 'mb-5');
+            const goToAvailable = document.createElement('a');
+            goToAvailable.classList.add('btn', 'btn-lg', 'btn-dark', 'rounded');
+            goToAvailable.href = '/pages/job/create_job.htm';
+            goToAvailable.textContent = 'Post a Job';
+            goToAvailableDiv.appendChild(goToAvailable);
+            jobListContainer.appendChild(goToAvailableDiv);
+          }
+
+          else {
+
+            // get the container element for the job list
+            const jobListContainer = document.querySelector('#jobListContainer');
+
+            // if user clicks on bid-jobs button, filter out jobs with no bids
+            if (buttonId === "bid-jobs"){
+              response.jobs = response.jobs.filter(job => job.jobApplicants.length > 0);
+            }
+
+            // loop through the jobs array and create a row for each job
+            response.jobs.forEach(job => {
+
+              // create a new row element
+              const row = document.createElement('div');
+              row.classList.add('row', 'mx-auto', 'mb-3', 'p-2', 'shadow', 'bg-light', 'text-center', 'rounded-3', 'text-secondary');
+
+              // create row for badge
+              const badgeRow = document.createElement('div');
+              badgeRow.classList.add('row', 'mt-3', 'mx-auto', 'mb-2');
+
+              // add a badge to display something based on the button clicked
+              const badge = document.createElement('span');
+              badge.classList.add('badge', 'rounded-pill', 'mx-1', 'fw-medium', 'text-dark', 'fs-7', 'fw-light', 'align-self-start', 'text-uppercase', 'mb-0', 'mt-0', 'p-1', 'px-2', 'w-auto', 'text-center', 'text-wrap')
+
+              // if the user clicks on the all jobs button
+              if (buttonId === "all-jobs"){
+                // depending on the job status, display a different badge
+                if (job.jobStatus === 'available') {
+                  badge.classList.add('bg-primary-subtle');
+                  badge.textContent = 'Available';
+                } else if (job.jobStatus === 'accepted') {
+                  badge.classList.add('bg-danger-subtle');
+                  badge.textContent = 'Selected';
+                } else if (job.jobStatus === 'assigned') {
+                  badge.classList.add('bg-primary-subtle');
+                  badge.textContent = 'Assigned';
+                } else if (job.jobStatus === 'in-progress') {
+                  badge.classList.add('bg-info-subtle');
+                  badge.textContent = 'In-Progress';
+                } else if (job.jobStatus === 'completed') {
+                  badge.classList.add('bg-secondary-subtle');
+                  badge.textContent = 'Completed';
+                }
+              }
+
+              // if the user clicks on the bid jobs button
+              else if (buttonId === "bid-jobs"){
+                badge.classList.add('bg-warning-subtle');
+                badge.textContent = 'Bids Available';
+              }
+              // if the user clicks on the selected jobs button
+              else if (buttonId === "selected-jobs"){
+                badge.classList.add('bg-danger-subtle');
+                badge.textContent = 'Selected';
+              }
+              // if the user clicks on the assigned jobs button
+              else if (buttonId === "assigned-jobs"){
+                badge.classList.add('bg-warning-subtle');
+                badge.textContent = 'Assigned';
+              }
+              // if the user clicks on the in-progress jobs button
+              else if (buttonId === "in-progress-jobs"){
+                badge.classList.add('bg-info-subtle');
+                badge.textContent = 'In-Progress';
+              }
+              // if the user clicks on the completed jobs button
+              else if (buttonId === "completed-jobs"){
+                badge.classList.add('bg-secondary-subtle');
+                badge.textContent = 'Completed';
+              }
+
+              badgeRow.appendChild(badge);
+              row.appendChild(badgeRow);
+
+              // create first row for the job icon, job service name, address, duration, start date
+              const firstRow = document.createElement('div');
+              firstRow.classList.add('row', 'mt-3', 'mx-auto', 'mb-2');
+
+              // create a column for the job icon
+              const iconColumn = document.createElement('div');
+              iconColumn.classList.add('col-2');
+              const iconWrapper = document.createElement('div');
+              iconWrapper.classList.add('rounded-circle', 'bg-dark-subtle', 'd-flex', 'justify-content-center', 'align-items-center', 'p-2');
+              iconWrapper.style.width = '60px';
+              iconWrapper.style.height = '60px';
+              const icon = document.createElement('i');
+              icon.classList.add('fa', 'fa-suitcase', 'fa-lg', 'text-muted');
+              iconWrapper.appendChild(icon);
+              iconColumn.appendChild(iconWrapper);
+              firstRow.appendChild(iconColumn);
+
+              // create a column for hold the job service name, address, duration, start date
+              // service name first row, address second row, duration and start date third row
+              const detailsColumn = document.createElement('div');
+              detailsColumn.classList.add('col-auto', 'align-self-center', 'text-start', 'ms-3');
+                            
+              const jobName = document.createElement('h2');
+              jobName.classList.add('fs-6', 'mb-2', 'fw-bold');
+              jobName.textContent = job.jobName;
+              detailsColumn.appendChild(jobName);
+
+              const serviceName = document.createElement('h2');
+              serviceName.classList.add('fs-6', 'mb-2', 'fw-medium');
+              serviceName.textContent = job.serviceName;
+              detailsColumn.appendChild(serviceName);
+              const address = document.createElement('p');
+              address.classList.add('fs-6', 'fw-light');
+              const addressIcon = document.createElement('span');
+              addressIcon.classList.add('fa', 'fa-map-marker', 'me-1');
+              address.appendChild(addressIcon);
+              if (job.jobLocation.address.length > 68) {
+                address.appendChild(document.createTextNode(job.jobLocation.address.substring(0, 70) + '...'));
+              } else {
+                address.appendChild(document.createTextNode(job.jobLocation.address));
+              }
+              detailsColumn.appendChild(address);
+
+              // create a div for the duration and start date
+              const durationStartDate = document.createElement('div');
+              durationStartDate.classList.add('d-flex', 'justify-content-start', 'w-100');
+              const duration = document.createElement('p');
+              duration.classList.add('fs-6', 'fw-light', 'me-2');
+              const durationIcon = document.createElement('span');
+              durationIcon.classList.add('fa', 'fa-clock-o', 'me-1');
+              duration.appendChild(durationIcon);
+
+              // calculate the duration and display it in a understandable format
+              const durationInHours = job.jobDuration.hours + (job.jobDuration.days * 24) + (job.jobDuration.months * 30 * 24) + (job.jobDuration.years * 365 * 24);
+              // hours
+              if (durationInHours < 24) {
+                duration.appendChild(document.createTextNode(`${durationInHours} hrs`));
+              }
+              // hours and days
+              else if (durationInHours < 24 * 30) {
+                const days = Math.floor(durationInHours / 24);
+                const hours = durationInHours % 24;
+                duration.appendChild(document.createTextNode(`${days} days ${hours} hrs`));
+              }
+              // hours, days and months
+              else if (durationInHours < 24 * 30 * 12) {
+                const months = Math.floor(durationInHours / (24 * 30));
+                const days = Math.floor((durationInHours % (24 * 30)) / 24);
+                const hours = (durationInHours % (24 * 30)) % 24;
+                duration.appendChild(document.createTextNode(`${months} months ${days} days ${hours} hrs`));
+              }
+              // hours, days, months and years
+              else {
+                const years = Math.floor(durationInHours / (24 * 30 * 12));
+                const months = Math.floor((durationInHours % (24 * 30 * 12)) / (24 * 30));
+                const days = Math.floor(((durationInHours % (24 * 30 * 12)) % (24 * 30)) / 24);
+                const hours = ((durationInHours % (24 * 30 * 12)) % (24 * 30)) % 24;
+                duration.appendChild(document.createTextNode(`${years} years ${months} months ${days} days ${hours} hrs`));
+              }
+
+              const jobType = document.createElement('p');
+              jobType.classList.add('fs-6', 'fw-light', 'ms-4');
+              const jobTypeIcon = document.createElement('span');
+              jobTypeIcon.classList.add('fa', 'fa-black-tie', 'me-1');
+              jobType.appendChild(jobTypeIcon);
+              jobType.appendChild(document.createTextNode(job.jobType.charAt(0).toUpperCase() + job.jobType.slice(1)));
+              durationStartDate.appendChild(duration);
+              const startDate = document.createElement('p');
+              startDate.classList.add('fs-6', 'fw-light', 'ms-4');
+              const startDateIcon = document.createElement('span');
+              startDateIcon.classList.add('fa', 'fa-calendar-o', 'me-1');
+              startDate.appendChild(startDateIcon);
+              startDate.appendChild(document.createTextNode(new Date(job.jobStartDate).toDateString()));
+              durationStartDate.appendChild(jobType);
+              durationStartDate.appendChild(startDate);
+              detailsColumn.appendChild(durationStartDate);
+              
+              firstRow.appendChild(detailsColumn);
+
+              //add dividers
+              const divider = document.createElement('hr');
+              divider.classList.add('my-2', 'mx-auto', 'border-secondary-subtle');
+              firstRow.appendChild(divider);
+
+              // append the first row to the row
+              row.appendChild(firstRow);
+
+              // create second row for bid numbers
+              const secondRow = document.createElement('div');
+              secondRow.classList.add('row', 'mx-auto', 'mb-2');
+
+              // create a column for the bid numbers
+              const bidColumn = document.createElement('div');
+              bidColumn.classList.add('col-12');
+              const bid = document.createElement('p');
+              bid.classList.add('fs-6', 'fw-light');
+              bid.textContent = `${job.jobApplicants.length} Offers`;
+              bidColumn.appendChild(bid);
+              secondRow.appendChild(bidColumn);
+
+              //add dividers
+              const divider2 = document.createElement('hr');
+              divider2.classList.add('my-2', 'mx-auto', 'border-secondary-subtle');
+              secondRow.appendChild(divider2);
+
+              // append the second row to the row
+              row.appendChild(secondRow);
+
+              // create third row for the job price, status and search icon
+
+              const thirdRow = document.createElement('div');
+              thirdRow.classList.add('row', 'mx-auto', 'mb-2');
+
+              // create a column for the job price
+              const priceColumn = document.createElement('div');
+              priceColumn.classList.add('col-auto', 'ms-4', 'mt-1', 'me-3');
+              const price = document.createElement('p');
+              price.classList.add('fs-5', 'fw-bolder', 'text-dark');
+              price.textContent = `$${job.jobPrice}`;
+              const perHour = document.createElement('span');
+              perHour.classList.add('fs-6', 'text-secondary', 'ms-1', 'fw-medium');
+              perHour.textContent = 'Per hour';
+              price.appendChild(perHour);
+              priceColumn.appendChild(price);
+              thirdRow.appendChild(priceColumn);
+
+              // create a column for the job status
+              const statusColumn = document.createElement('div');
+              statusColumn.classList.add('col-auto', 'ms-auto');
+              const status = document.createElement('a');
+              status.classList.add('btn', 'btn-lg', 'shadow', 'btn-dark', 'text-uppercase');
+
+              if (buttonId === "all-jobs"){
+                status.textContent = job.jobStatus;
+                status.href = `/pages/job/view_job.htm?jobId=${job._id}`;
+              }
+              else if (buttonId === "bid-jobs"){
+                status.href = `/pages/job/view_job.htm?jobId=${job._id}`;
+                status.textContent = 'Select Bid';
+              }
+              else if (buttonId === "selected-jobs"){
+                status.textContent = 'See Details';
+              }
+              else if (buttonId === "assigned-jobs"){
+                status.textContent = 'Assigned';
+              }
+              else if (buttonId === "in-progress-jobs"){
+                status.textContent = 'In-progress';
+              }
+              else if (buttonId === "completed-jobs"){
+                status.textContent = 'Completed';
+              }
+
+              statusColumn.appendChild(status);
+              thirdRow.appendChild(statusColumn);
+
+              // create a column for search icon that redirects to the job details page
+              const gotoDetailsColumn = document.createElement('div');
+              gotoDetailsColumn.classList.add('col-auto');
+              const gotoDetails = document.createElement('a');
+              gotoDetails.classList.add('btn', 'btn-lg', 'shadow', 'btn-dark', 'text-uppercase');
+              gotoDetails.href = `/pages/job/view_job.htm?jobId=${job._id}`;
+              const gotoDetailsIcon = document.createElement('span');
+              gotoDetailsIcon.classList.add('fa', 'fa-search');
+              gotoDetails.appendChild(gotoDetailsIcon);
+              gotoDetailsColumn.appendChild(gotoDetails);
+              thirdRow.appendChild(gotoDetailsColumn);
+
+              //if clicked on available-jobs button, hide gotoDetailsColumn
+              if (buttonId === "all-jobs" || buttonId === "bid-jobs"){
+                gotoDetailsColumn.style.display = "none";
+              }
+
+              // append the third row to the row
+              row.appendChild(thirdRow);
+
+              // append the row to the job list container
+              jobListContainer.appendChild(row);
+
+            });
+          }
+        },
+        error: function (xhr, status, error) {
+          
+        }
+      });
+    }
+  </script>
+</head>
+
+<!-- Client Home  -->
+
+<body class="bg-light text-dark">
+
+  <!-- Top section  -->
+  <div id="client_home_container" class="container-fluid bg-light text-dark pt-2 col-7">
+    <!-- Header -->
+    <div class="row">
+      <!-- Welcom messege to left -->
+      <div class="col-6">
+        <h1 class="fs-6 fw-medium">Hi,</h1>
+        <h1 id="firstName" class="fs-5">Client</h1>
+      </div>
+
+      <!-- Nav -->
+      <div class="col-6 text-end">
+        <!-- Hamburger menu -->
+        <div class="dropdown">
+          <button class="btn btn-outline-dark btn-sm dropdown-toggle" type="button" id="dropdownMenuButton"
+            data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fa fa-bars"></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton">
+            <li>
+              <button class="dropdown-item" type="button" onclick="clearLocalStorageAndRedirect()">Log Out</button>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search Bar with filter button -->
+    <div class="row mt-5">
+      <div class="col-12">
+        <div class="input-group mb-1 shadow rounded-pill">
+          <!-- Search icon -->
+          <span class="input-group-text border-0 bg-white p-3
+        " id="button-addon2"><i class="fa fa-search"></i></span>
+          <!-- Search bar -->
+          <input type="text" class="form-control border-0 bg-white shadow-none
+        " id="search" placeholder="Search" aria-label="Search" aria-describedby="button-addon2">
+          <!-- Filter button -->
+          <button class="btn border-0 bg-white shadow-none
+        " type="button" id="button-addon2"><i class="fa fa-filter"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Create Job button -->
+    <div class="row mt-4 mb-2">
+      <div class="col-12">
+        <div class="input-group mb-3 shadow rounded">
+          <button class="btn border-0 w-100 shadow-none me-2 text-body-secondary" type="button"
+            onclick="window.location.href='/pages/job/create_job.htm'"><i class="fa fa-plus"></i> Create
+            Job</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Button array to view jobs -->
+    <div class="row mt-4 mb-2 justify-content-between">
+
+      <!-- Available jobs button -->
+      <div class="col-auto me-0">
+        <div class="input-group mb-3" id="available-group">
+          <button class="btn border-0 shadow-sm me-2 text-body-secondary" type="button" id="all-jobs" onclick="getJobs('all-jobs')">All</button>
+        </div>
+      </div>
+
+      <!-- Button array to view providers bids -->
+      <div class="col-auto align-self-end pe-1">
+        <div class="input-group mb-3" id="bid-group">
+          <button class="btn border-0 shadow-sm me-2 text-body-secondary" type="button" id="bid-jobs" onclick="getJobs('bid-jobs')">Bids</button>
+          <button class="btn border-0 shadow-sm me-2 text-body-secondary" type="button" id="selected-jobs" onclick="getJobs('selected-jobs')">Selected</button>
+          <button class="btn border-0 shadow-sm me-2 text-body-secondary" type="button" id="assigned-jobs" onclick="getJobs('assigned-jobs')">Assigned</button>
+          <button class="btn border-0 shadow-sm me-2 text-body-secondary" type="button" id="in-progress-jobs" onclick="getJobs('in-progress-jobs')">In-progress</button>
+          <button class="btn border-0 shadow-sm me-2 text-body-secondary" type="button" id="completed-jobs" onclick="getJobs('completed-jobs')">Completed</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Heading for the job list -->
+    <div class="row mx-auto mt-4 mb-2">
+      <!-- Your Jobs -->
+      <div class="col-6">
+        <h1 class="fs-6 fw-medium" id="current-title"></h1>
+      </div>
+      <!-- Current Date to right -->
+      <div class="col-6 text-end">
+        <h1 class="fs-6 fw-light text-body-secondary">
+          <!-- date with date icon -->
+          <i class="fa fa-calendar me-2"></i> <span id="currentDate"></span>
+        </h1>
+      </div>
+    </div>
+  
+    <!-- Container for the job list -->
+    <div class="row shadow-none bg-light text-center rounded">
+      <div class="col-12" id="jobListContainer">
+      </div>
+    </div>
+  </div>
+
+
+  </div>
+
+</body>

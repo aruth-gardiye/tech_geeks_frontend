@@ -1,0 +1,548 @@
+<!-- Description: Register page for Tech Geeks -->
+<!-- Path: pages/register.htm -->
+
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Register Page</title>
+
+  <!-- Bootstrap -->
+  <link rel="stylesheet" href="../utils/bootstrap-5.3/bootstrap.min.css" />
+  <script type='text/javascript' src="../utils/bootstrap-5.3/bootstrap.bundle.min.js"></script>
+
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="../utils/font-awesome-4.7.0/css/font-awesome.min.css">
+
+  <!-- JQuery -->
+  <script type='text/javascript' src="../utils/jquery-3.7.1.min.js"></script>
+
+  <!-- Bootstrap Select wait for JQuery to load before loading -->
+  <link rel="stylesheet" href="../utils/bootstrap-select-1.14.0-beta2/bootstrap-select.min.css" />
+  <script type='text/javascript' src="../utils/bootstrap-select-1.14.0-beta2/bootstrap-select.min.js"></script>
+
+  <script>
+    $(document).ready(function() {
+      $('.selectpicker').selectpicker({
+        size: 4
+      });
+    });
+  </script>
+
+  <!-- Toastr -->
+  <link rel="stylesheet" href="../utils/toastr-2.1.1/toastr.min.css" />
+  <script type='text/javascript' src="../utils/toastr-2.1.1/toastr.min.js"></script>
+
+  <!-- Cleave
+  <script type='text/javascript' src="../utls/cleave.min.js"></script>
+  <script type='text/javascript' src="../utls/cleave-phone.au.js"></script>
+  <script type='text/javascript' src="../utls/cleave_format.js"></script> -->
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="../utils/main.css" />
+
+  <!-- Toggle password -->
+  <script type='text/javascript'>
+    $(document).ready(function () {
+      $('.toggle-password').click(function () {
+        var passwordInput = $(this).prev();
+        var passwordInputType = passwordInput.attr('type');
+        if (passwordInputType === 'password') {
+          passwordInput.attr('type', 'text');
+          $(this).html('<i class="fa fa-eye-slash"></i>');
+        } else {
+          passwordInput.attr('type', 'password');
+          $(this).html('<i class="fa fa-eye"></i>');
+        }
+      });
+    });
+  </script>
+
+  <!-- Autocomplete address -->
+  <script>
+    $(document).ready(function () {
+      const API_URL = 'https://techgeeksprotobackend.azurewebsites.net/api/Helper/getSearchResults';
+
+      $('#address').on('keyup', function () {
+        if (event.keyCode === 9) { // Tab key
+          return;
+        }
+        const address = $(this).val();
+        // remove error message
+        $('#address').next('is-invalid, is-valid').text('');
+
+        $.ajax({
+          url: API_URL,
+          data: { address },
+          success: function (data) {
+            // remove error message
+            $('#address').removeClass('is-invalid').addClass('is-valid');
+            $('#address').next('.invalid-feedback, .valid-feedback').text('');
+            const searchResults = data.searchResults;
+            if (searchResults.length === 0) {
+              $('#address-select').find('option').remove();
+              $('#address-select').hide();
+              return;
+            }
+            const options = searchResults.map(function (result) {
+              return '<option value="' + result.address + '" data-coordinates="' + result.coordinates.join(',') + '">' + result.address + '</option>';
+            });
+            $('#address-select').html('').append(options.join(''));
+            $('#address-select').show();
+          },
+          error: function () {
+            $('#address-select').find('option').remove();
+            $('#address-select').hide();
+            // add error message and remove valid message
+            $('#address').removeClass('is-valid').addClass('is-invalid');
+            $('#address').next('.invalid-feedback, .valid-feedback').text('No address found. Please enter a valid address.');
+          }
+        });
+      })
+
+      // if user clicks outside of the address field or the address list, and the address field is not empty, populate the address field with the first address from the list and hide the list
+      $(document).on('click', function (event) {
+        if ($(event.target).closest('#address, #address-select').length === 0) {
+          // if no option is available, clear the address field and hide the list
+          if ($('#address-select').find('option').length === 0) {
+            $('#address').val('');
+            $(this).hide();
+            return;
+          }
+
+          // if selected address and address field are the same, hide the list
+          const selectedOption = $('#address-select').find('option:selected');
+          if (selectedOption.val() === $('#address').val()) {
+            $('#address-select').hide();
+            return;
+          } else {
+            // if selected address and address field are different, populate the address field with the selected address and hide the list
+            $('#address').val(selectedOption.val());
+            $('#coordinates').val(selectedOption.data('coordinates'));
+            $('#address-select').hide();
+            // clear error of address field and mark it as valid
+            $('#address').removeClass('is-invalid').addClass('is-valid');
+            $('#address').next('.invalid-feedback, .valid-feedback').text('');
+          }
+        }
+      });
+
+    });
+  </script>
+
+  <!-- Hide service names if account type is client -->
+  <script type='text/javascript'>
+    $(document).ready(function () {
+      $('#accType').change(function () {
+        if ($(this).val() === 'client') {
+          $('#serviceNames_row').hide();
+        } else {
+          $('#serviceNames_row').show();
+        }
+      });
+    });
+  </script>
+
+  <!-- Validate registration form -->
+  <script type='text/javascript'>
+    $(document).ready(function () {
+      // Add event listeners to input fields
+      $('#username, #email, #password, #accType, #firstName, #lastName, #tel, #address, #coordinates, #serviceNames').on('input keyup', function () {
+        if (event.keyCode === 9) { // Tab key
+          return;
+        }
+        const username = $('#username').val();
+        const email = $('#email').val();
+        const password = $('#password').val();
+        const accType = $('#accType').val();
+        const firstName = $('#firstName').val();
+        const lastName = $('#lastName').val();
+        const tel = $('#tel').val();
+        const address = $('#address').val();
+        const addressSelect = $('#address-select').val();
+        const coordinates = $('#coordinates').val();
+        const serviceNames = $('#serviceNames').val();
+
+        const errors = validateRegisterForm(username, email, password, accType, firstName, lastName, tel, address, addressSelect, coordinates, serviceNames);
+        $(this).toggleClass('is-invalid', errors[$(this).attr('id')] !== undefined);
+        $(this).toggleClass('is-valid', errors[$(this).attr('id')] === undefined);
+        if (errors[$(this).attr('id')] !== undefined) {
+          $(this).next('.invalid-feedback, .valid-feedback').text(errors[$(this).attr('id')]);
+          if ($(this).attr('id') === 'password') {
+            $('#password-error').text(errors[$(this).attr('id')]);
+          }
+          if ($(this).attr('id') === 'serviceNames') {
+            $('#serviceNames-error').text(errors[$(this).attr('id')]);
+          }
+        } else {
+          $('#password').next('.invalid-feedback, .valid-feedback').text('');
+          $('#serviceNames').next('.invalid-feedback, .valid-feedback').text('');
+        }
+      });
+
+      // Add event listener to serviceNames select
+      $('#serviceNames').trigger('change').change(function () {
+        console.log($(this).val());
+        const serviceNames = $(this).val();
+        $(this).toggleClass('is-invalid', serviceNames.length === 0);
+        $(this).toggleClass('is-valid', serviceNames.length > 0);
+        if (serviceNames.length < 1) {
+          $('#serviceName').toggleClass('is-invalid', true);
+          $('#serviceNames-error').text('At least one service name is required.');
+        } else {
+          $('#serviceName').toggleClass('is-invalid', false);
+          $('#serviceNames-error').text('');
+        }
+      });
+
+      // Add submit event listener to form
+      $('#register_form').submit(function (event) {
+        const username = $('#username').val();
+        const email = $('#email').val();
+        const password = $('#password').val();
+        const accType = $('#accType').val();
+        const firstName = $('#firstName').val();
+        const lastName = $('#lastName').val();
+        const tel = $('#tel').val();
+        const address = $('#address').val();
+        const addressSelect = $('#address-select').val();
+        const coordinates = $('#coordinates').val();
+        const serviceNames = $('#serviceNames').val();
+        const errors = validateRegisterForm(username, email, password, accType, firstName, lastName, tel, address, addressSelect, coordinates, serviceNames);
+        $('.invalid-feedback, .valid-feedback').text('');
+        Object.keys(errors).forEach(function (field) {
+          $('#' + field).toggleClass('is-invalid', true);
+          if (field === 'password') {
+            $('#password-error').text(errors[field]);
+          }
+          if (field === 'serviceNames') {
+            $('#serviceNames-error').text(errors[field]);
+          }
+          $('#' + field).next('.invalid-feedback, .valid-feedback').text(errors[field]);
+        });
+        console.log(errors);
+        if (Object.keys(errors).length > 0) {
+          event.preventDefault();
+          return;
+        }
+
+
+        //create location array with address, longitude and latitude (set longitude and latitude as numbers)
+        const location = [{
+          address,
+          longitude: Number(coordinates.split(',')[0]),
+          latitude: Number(coordinates.split(',')[1])
+        }];
+
+        //create serviceNames array with serviceName objects
+        const serviceNamesArray = serviceNames.map(function (serviceName) {
+          return { serviceName };
+        });
+
+        let data = {
+          username,
+          email,
+          password,
+          accType,
+          firstName,
+          lastName,
+          tel,
+          location,
+          serviceNames: serviceNamesArray
+        };
+
+        //convert data to JSON string
+        data = JSON.stringify(data);
+        console.log(data);
+        event.preventDefault();
+
+        //send data to backend with POST request https://techgeeksprotobackend.azurewebsites.net/api/User/CreateUser/
+        $.ajax({
+          url: 'https://techgeeksprotobackend.azurewebsites.net/api/User/CreateUser/',
+          type: 'POST',
+          data: data,
+          contentType: 'application/json',
+          success: function (data) {
+            // {
+            //     "message": "User created",
+            //     "user": {
+            //         "_id": "6514f86d8a8ed8f82295df3a",
+            //         "username": "jacksonpot_provider",
+            //         "accType": "provider",
+            //         "email": "jacksonpot@example.com"
+            //     }
+            // }
+
+            // show success message using toastr
+            toastr.success('Registration successful');
+
+            // make submit button disabled
+            $('#register_form button[type="submit"]').attr('disabled', true);
+
+            // redirect to login page after 1 seconds
+            // make page fade out
+            $('#register_container').fadeOut(1000);
+            setTimeout(function () {
+              window.location.href = 'login.htm';
+            }, 2000);
+          },
+          error: function (data) {
+            //display error message as toast
+            toastr.error('Registration failed');
+
+            // show response from server using a modal
+            $('#responseModal').attr('hidden', false);
+            $('#responseModal').modal('show');
+            $('#responseModal .modal-body').html(data.responseJSON.message);
+          }
+
+        });
+      });
+    });
+
+    // Validate registration form using ..utils/validate.js
+    const validateRegisterForm = (username, email, password, accType, firstName, lastName, tel, address, addressSelect, coordinates, serviceNames) => {
+      const errors = {};
+      if (!username) {
+        errors.username = 'Username is required.';
+      }
+      if (!email || !email.match(/^([\w.%+-]+)@([\w-]+\.)+([\w]{2,})$/i)) {
+        errors.email = 'Email is required and must be in the correct format.';
+      }
+      if (!password) {
+        errors.password = 'Password is required.';
+      }
+      if (!accType || accType === 'none') {
+        errors.accType = 'Account type is required.';
+      }
+      if (!firstName) {
+        errors.firstName = 'First name is required.';
+      }
+      if (!lastName) {
+        errors.lastName = 'Last name is required.';
+      }
+      if (!tel) {
+        errors.tel = 'Tel is required.';
+      }
+      if (address != addressSelect) {
+        errors.address = 'Address is required.';
+      }
+      if (!coordinates) {
+        errors.coordinates = 'Coordinates is required.';
+      }
+      if (serviceNames.length === 0 && accType !== 'client') {  
+        errors.serviceNames = 'At least one service name is required.';
+      }
+      return errors;
+    };
+  </script>
+
+  <style>
+    .is-valid~.valid-feedback {
+      display: block;
+    }
+  </style>
+
+</head>
+
+<body class="bg-light text-dark">
+  <!-- Modal -->
+  <div id="responseModal" class="modal modal-dialog-centered" aria-hidden="true" tabindex="-1" hidden>
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body"></div>
+        <!-- Dismiss Button in Footer -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Dismiss</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <div id="register_container" class="container-fluid bg-light text-dark pt-5">
+    <div class="row">
+      <div class="col-12 col-sm-12 text-center">
+        <p class="fs-2 fw-bold">Hello!</p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-12 col-sm-12 text-center">
+        <p class="fs-5 fw-lighter">Enter your details below</p>
+      </div>
+    </div>
+
+    <!-- Form using bootstrap -->
+    <div class="col-6 col-sm-6 mx-auto mt-2 mb-5 p-5">
+      <form id="register_form" class="row g-3 needs-validation" novalidate>
+
+        <!-- Username -->
+        <div class="row">
+          <div class="col-12 col-sm-12 mb-3">
+            <label for="username" class="form-label fw-medium text-body-secondary">User Name</label>
+            <input type="text" class="form-control border-0 p-3" id="username" placeholder="&#xf2c0;    Your User Name"
+              style="font-family:Arial, FontAwesome" required>
+            <div class="invalid-feedback"></div>
+          </div>
+        </div>
+
+        <!-- Email -->
+        <div class="row">
+          <div class="col-12 col-sm-12 mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input type="text" class="form-control border-0 p-3" id="email" placeholder="&#xf003;    Enter Your email"
+              style="font-family:Arial, FontAwesome" required>
+            <div class="invalid-feedback"></div>
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="row">
+          <div class="col-12 col-sm-12 mb-3">
+            <label for="password" class="form-label">Password</label>
+            <div class="input-group flex-wrap">
+              <input type="password" class="form-control border-0 p-3" id="password" placeholder="&#xf023;    Your Password" style="font-family:Arial, FontAwesome" required>
+              <button class="btn btn-toggle-password border-0 toggle-password" type="button"><i
+                  class="fa fa-eye"></i></button>
+              <div id="password-error" class="invalid-feedback w-100">test</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Account Type -->
+        <div class="row">
+          <div class="col-12 col-sm-12 mb-3">
+            <label for="accType" class="form-label">Account Type</label>
+              <select id="accType" class="form-select border-0 p-3" required>
+                <option value="none" selected disabled>Please select and account Type</option>
+                <option value="client">Client</option>
+                <option value="provider">Provider</option>
+              </select>
+            <div class="invalid-feedback"></div>
+          </div>
+        </div>
+
+        <!-- First Name -->
+        <div class="row">
+          <div class="col-12 col-sm-12 mb-3">
+            <label for="firstName" class="form-label">First Name</label>
+            <input type="text" class="form-control border-0 p-3" id="firstName" placeholder="&#xf2c0;    Enter Your First Name" style="font-family:Arial, FontAwesome" required>
+            <div class="invalid-feedback"></div>
+          </div>
+        </div>
+
+        <!-- Last Name -->
+        <div class="row">
+          <div class="col-12 col-sm-12 mb-3">
+            <label for="lastName" class="form-label">Last Name</label>
+            <input type="text" class="form-control border-0 p-3" id="lastName"
+              placeholder="&#xf2c0;    Enter Your Last Name" style="font-family:Arial, FontAwesome" required>
+            <div class="invalid-feedback"></div>
+          </div>
+        </div>
+
+        <!-- Tel -->
+        <div class="row">
+          <div class="col-12 col-sm-12 mb-3">
+            <label for="tel" class="form-label">Tel</label>
+            <input type="text" class="form-control border-0 p-3" id="tel" placeholder="&#xf095;    Enter Your Tel"
+              style="font-family:Arial, FontAwesome" required>
+            <div class="invalid-feedback"></div>
+          </div>
+        </div>
+
+        <!-- Address (autocomplete on keyup after 3 characters), populate list of addresses -->
+        <div class="row">
+          <div class="col-12 col-sm-12 mb-3">
+            <label for="address" class="form-label">Address</label>
+            <input type="text" class="form-control border-0 p-3" id="address"
+              placeholder="&#xf041;    Enter Your Address" style="font-family:Arial, FontAwesome" required>
+            <div class="invalid-feedback"></div>
+            <select id="address-select" class="form-select mt-2" style="display: none;"></select>
+            <input type="hidden" id="coordinates">
+          </div>
+        </div>
+
+        <!-- Service Names, can select multiple -->
+        <!-- serviceNames: ["IT Support Level 1", "IT Support Level 2", "IT Support Level 3", "IT Support Level 4",
+        "IT Technician", "Network Engineer", "Cloud Services Engineer", "Software Engineer", "Software Developer",
+        "Web Developer", "Web Designer", "Graphic Designer", "UX Designer", "UI Designer", "Data Scientist",
+        "Data Analyst", "Data Engineer", "Data Architect", "Database Administrator", "Database Developer",
+        "Database Manager", "Database Architect", "Database Designer", "Database Analyst", "Database Engineer",
+        "Cyber Security Analyst", "Cyber Security Engineer", "Cyber Security Architect", "Cyber Security Manager"
+        ], -->
+        <div class="row" id="serviceNames_row" style="display: none;">
+          <div class="col-12 col-sm-12 mb-3">
+            <label for="serviceNames" class="form-label">Service Names</label>
+            <div class="row col-12 mx-auto bg-white rounded">
+            <select id="serviceNames" class="selectpicker w-100 bg-white p-2" multiple data-live-search="true" data-style="btn-light bg-white border-0" required>
+              <option value="IT Support Level 1">IT Support Level 1</option>
+              <option value="IT Support Level 2">IT Support Level 2</option>
+              <option value="IT Support Level 3">IT Support Level 3</option>
+              <option value="IT Support Level 4">IT Support Level 4</option>
+              <option value="IT Technician">IT Technician</option>
+              <option value="Network Engineer">Network Engineer</option>
+              <option value="Cloud Services Engineer">Cloud Services Engineer</option>
+              <option value="Software Engineer">Software Engineer</option>
+              <option value="Software Developer">Software Developer</option>
+              <option value="Web Developer">Web Developer</option>
+              <option value="Web Designer">Web Designer</option>
+              <option value="Graphic Designer">Graphic Designer</option>
+              <option value="UX Designer">UX Designer</option>
+              <option value="UI Designer">UI Designer</option>
+              <option value="Data Scientist">Data Scientist</option>
+              <option value="Data Analyst">Data Analyst</option>
+              <option value="Data Engineer">Data Engineer</option>
+              <option value="Data Architect">Data Architect</option>
+              <option value="Database Administrator">Database Administrator</option>
+              <option value="Database Developer">Database Developer</option>
+              <option value="Database Manager">Database Manager</option>
+              <option value="Database Architect">Database Architect</option>
+              <option value="Database Designer">Database Designer</option>
+              <option value="Database Analyst">Database Analyst</option>
+              <option value="Database Engineer">Database Engineer</option>
+              <option value="Cyber Security Analyst">Cyber Security Analyst</option>
+              <option value="Cyber Security Engineer">Cyber Security Engineer</option>
+              <option value="Cyber Security Architect">Cyber Security Architect</option>
+              <option value="Cyber Security Manager">Cyber Security Manager</option>
+            </select>
+            <div id="serviceNames-error" class="invalid-feedback d-block"></div>
+          </div>
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="row">
+          <div class="col-12 col-sm-12 mt-2 mb-3">
+            <div class="d-grid gap-2">
+              <button class="btn btn-lg p-3 btn-dark" type="submit">Sign Up</button>
+            </div>
+          </div>
+        </div>
+
+      </form>
+    </div>
+
+</body>
+
+<script type='text/javascript'>
+  // create a script to populate with dummy data after 2 seconds after page load
+  $(document).ready(function () {
+    setTimeout(function () {
+      $('#username').val('test');
+      $('#email').val('test@example.com');
+      $('#password').val('password');
+      $('#accType').val('provider');
+      $('#accType').trigger('change');
+      $('#firstName').val('test');
+      $('#lastName').val('test');
+      $('#tel').val('1234567890');
+      $('#address').val('test');
+      $('#coordinates').val('123,456');
+    }, 2000);
+  });
+</script>
+
+</html>

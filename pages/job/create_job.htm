@@ -1,0 +1,762 @@
+<!-- 
+    Create job page for client
+    Path: pages/job/create_job.js 
+-->
+
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Create Job</title>
+
+  <!-- Bootstrap -->
+  <link rel="stylesheet" href="../../utils/bootstrap-5.3/bootstrap.min.css" />
+  <script type='text/javascript' src="../../utils/bootstrap-5.3/bootstrap.bundle.min.js"></script>
+
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="../../utils/font-awesome-4.7.0/css/font-awesome.min.css">
+
+  <!-- JQuery -->
+  <script type='text/javascript' src="../../utils/jquery-3.7.1.min.js"></script>
+
+  <!-- Bootstrap Select wait for JQuery to load before loading -->
+  <link rel="stylesheet" href="../../utils/bootstrap-select-1.14.0-beta2/bootstrap-select.min.css" />
+  <script type='text/javascript' src="../../utils/bootstrap-select-1.14.0-beta2/bootstrap-select.min.js"></script>
+
+  <!-- Cleave
+  <script type='text/javascript' src="../../utls/cleave.min.js"></script>
+  <script type='text/javascript' src="../../utls/cleave-phone.au.js"></script>
+  <script type='text/javascript' src="../../utls/cleave_format.js"></script> -->
+
+  <!-- Toastr -->
+  <link rel="stylesheet" href="../../utils/toastr-2.1.1/toastr.min.css" />
+  <script type='text/javascript' src="../../utils/toastr-2.1.1/toastr.min.js"></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="../../utils/main.css" />
+
+  <script type='text/javascript'>
+    $(document).ready(function () {
+      $('.selectpicker').selectpicker({
+        size: 4
+      });
+    });
+  </script>
+
+  <script type='text/javascript'>
+    // function to clear the local storage and redirect to the login page
+    function clearLocalStorageAndRedirect() {
+      // Clear the local storage
+      localStorage.clear();
+
+      // Redirect to the login page
+      window.location.href = '../login.htm';
+    }
+  </script>
+
+  <script type='text/javascript'>
+    $(document).ready(function () {
+
+      // make use of local storage to get current user details
+      //   {
+      //     "message": "Login successful",
+      //     "user": {
+      //         "_id": "6514f7958a8ed8f82295df31",
+      //         "username": "johndoe_client",
+      //         "email": "johndoe@example.com",
+      //         "accType": "client",
+      //         "firstName": "John",
+      //         "lastName": "Doe",
+      //         "tel": "0512345678",
+      //         "location": [
+      //             {
+      //                 "address": "20 Seaview Street, Byron Bay New South Wales 2481, Australia",
+      //                 "longitude": 153.616961,
+      //                 "latitude": -28.652513
+      //             }
+      //         ],
+      //         "serviceNames": [],
+      //         "avatar": null,
+      //         "onBoarded": false,
+      //         "verified": false
+      //     }
+      // }
+
+      // get the current user from local storage
+      const currentUser = JSON.parse(localStorage.getItem('user'));
+      // check if the user is logged in
+      if (currentUser === null) {
+        // redirect to login page
+        window.location.href = '../login.htm';
+
+        return;
+      } 
+
+      // // check if the user is a client
+      if (currentUser.accType !== 'client') {
+        // redirect to page before login
+        window.history.back();
+      }
+
+    });
+
+  </script>
+
+  <!-- Autocomplete address -->
+  <script>
+    $(document).ready(function () {
+      const API_URL = 'https://techgeeksprotobackend.azurewebsites.net/api/Helper/getSearchResults';
+
+      $('#address').on('keyup', function () {
+        if (event.keyCode === 9) { // Tab key
+          return;
+        }
+        const address = $(this).val();
+        // remove error message
+        $('#address').next('is-invalid, is-valid').text('');
+
+        $.ajax({
+          url: API_URL,
+          data: { address },
+          success: function (data) {
+            // remove error message
+            $('#address').removeClass('is-invalid').addClass('is-valid');
+            $('#address').next('.invalid-feedback, .valid-feedback').text('');
+            const searchResults = data.searchResults;
+            if (searchResults.length === 0) {
+              $('#address-select').find('option').remove();
+              $('#address-select').hide();
+              return;
+            }
+            const options = searchResults.map(function (result) {
+              return '<option value="' + result.address + '" data-coordinates="' + result.coordinates.join(',') + '">' + result.address + '</option>';
+            });
+            $('#address-select').html('').append(options.join(''));
+            $('#address-select').show();
+          },
+          error: function () {
+            $('#address-select').find('option').remove();
+            $('#address-select').hide();
+            // add error message and remove valid message
+            $('#address').removeClass('is-valid').addClass('is-invalid');
+            $('#address').next('.invalid-feedback, .valid-feedback').text('No address found. Please enter a valid address.');
+          }
+        });
+      })
+
+      // if user clicks outside of the address field or the address list, and the address field is not empty, populate the address field with the first address from the list and hide the list
+      $(document).on('click', function (event) {
+        if ($(event.target).closest('#address, #address-select').length === 0) {
+          // if no option is available, clear the address field and hide the list
+          if ($('#address-select').find('option').length === 0) {
+            $('#address').val('');
+            $(this).hide();
+            return;
+          }
+
+          // if selected address and address field are the same, hide the list
+          const selectedOption = $('#address-select').find('option:selected');
+          if (selectedOption.val() === $('#address').val()) {
+            $('#address-select').hide();
+            return;
+          } else {
+            // if selected address and address field are different, populate the address field with the selected address and hide the list
+            $('#address').val(selectedOption.val());
+            $('#coordinates').val(selectedOption.data('coordinates'));
+            $('#address-select').hide();
+            // clear error of address field and mark it as valid
+            $('#address').removeClass('is-invalid').addClass('is-valid');
+            $('#address').next('.invalid-feedback, .valid-feedback').text('');
+          }
+        }
+      });
+
+    });
+  </script>
+
+  <script type="text/javascript">
+    // fill in the form with dummy data after 2 seconds
+    $(document).ready(function () {
+      setTimeout(function () {
+        $('#jobName').val('IT Support');
+        $('#serviceName').val('IT Support Level 1');
+        $('#jobType').val('full-time');
+        $('#coordinates').val('153.616961,-28.652513');
+        $('#hours').val('4');
+        // get current date
+        const today = new Date();
+        $('#jobStartDate').val(today.toISOString().split('T')[0]);
+        // add 1 day to current date
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        $('#jobEndDate').val(tomorrow.toISOString().split('T')[0]);
+        $('#jobDescription').val('IT Support');
+        $('#jobPrice').val('100');
+      }, 2000);
+    });
+  </script>
+
+  <script type='text/javascript'>
+    $(document).ready(function () {
+      // only let user enter numbers for hours, days, months, years, and jobPrice
+      $('#hours, #days, #months, #years').on('input keyup', function () {
+        if (event.keyCode === 9) { // Tab key
+          return;
+        }
+        const value = $(this).val();
+        if (isNaN(parseInt(value))) {
+          $(this).val(value.slice(0, -1));
+        }
+      });
+
+      // only let user enter maximum 2 decimal places for jobPrice
+      $('#jobPrice').on('input keyup', function () {
+        if (event.keyCode === 9) { // Tab key
+          return;
+        }
+        const value = $(this).val();
+        if (isNaN(parseFloat(value))) {
+          $(this).val(value.slice(0, -1));
+        } else {
+          const decimalIndex = value.indexOf('.');
+          if (decimalIndex !== -1 && value.length - decimalIndex > 3) {
+            $(this).val(value.slice(0, -1));
+          }
+        }
+      });
+    });
+  </script>
+
+  </script>
+
+  <!-- Validate registration form -->
+  <script type='text/javascript'>
+    $(document).ready(function () {
+      // Add event listeners to input fields
+      $('#jobName, #serviceName, #jobType, #address, #hours, #days, #months, #years, #jobStartDate, #jobEndDate, #jobDescription, #jobPrice').on('input keyup', function () {
+        if (event.keyCode === 9) { // Tab key
+          return;
+        }
+
+        const jobName = $('#jobName').val();
+        const serviceName = $('#serviceName').val();
+        const jobType = $('#jobType').val();
+        const address = $('#address').val();
+        const addressSelect = $('#address-select').val();
+        const hours = parseInt($('#hours').val());
+        const days = parseInt($('#days').val());
+        const months = parseInt($('#months').val());
+        const years = parseInt($('#years').val());
+        const jobStartDate = $('#jobStartDate').val();
+        const jobEndDate = $('#jobEndDate').val();
+        const jobDescription = $('#jobDescription').val();
+        const jobPrice = $('#jobPrice').val();
+
+        // call validateJobFunction
+        const errors = validateJobFunction(jobName, serviceName, jobType, address, addressSelect, hours, days, months, years, jobStartDate, jobEndDate, jobDescription, jobPrice);
+
+        $(this).toggleClass('is-invalid', errors[$(this).attr('id')] !== undefined);
+        $(this).toggleClass('is-valid', errors[$(this).attr('id')] === undefined);
+        
+        if (errors[$(this).attr('id')] !== undefined) {
+          $(this).next('.invalid-feedback').text(errors[$(this).attr('id')]);
+          if ($(this).attr('id') === 'jobDuration' || $(this).attr('id') === 'hours' || $(this).attr('id') === 'days' || $(this).attr('id') === 'months' || $(this).attr('id') === 'years') {
+            $('#jobDurationerror').text(errors[$(this).attr('id')]);
+            // add invalid message
+            $('#jobDurationerror, #hours, #days, #months, #years').addClass('is-invalid');
+          }
+        } 
+        
+        // if there is no jobDuration, hours, days, months, or years error, remove invalid message
+        if (errors.jobDuration === undefined && errors.hours === undefined && errors.days === undefined && errors.months === undefined && errors.years === undefined) {
+          // remove invalid message
+          $('#jobDurationerror, #hours, #days, #months, #years').removeClass('is-invalid');
+          $('#jobDurationerror, #hours, #days, #months, #years').next('.invalid-feedback').text('');
+          // add valid message
+          $('#jobDurationerror, #hours, #days, #months, #years').addClass('is-valid');
+        }
+      });
+
+      // Add event listener to form submit button
+      $('#create_job_form').submit(function (event){
+        const jobName = $('#jobName').val();
+        const serviceName = $('#serviceName').val();
+        const jobType = $('#jobType').val();
+        const address = $('#address').val();
+        const addressSelect = $('#address-select').val();
+        const coordinates = $('#coordinates').val();
+        const hours = parseInt($('#hours').val());
+        const days = parseInt($('#days').val());
+        const months = parseInt($('#months').val());
+        const years = parseInt($('#years').val());
+        const jobStartDate = $('#jobStartDate').val();
+        const jobEndDate = $('#jobEndDate').val();
+        const jobDescription = $('#jobDescription').val();
+        const jobPrice = $('#jobPrice').val();
+
+        // call validateJobFunction
+        const errors = validateJobFunction(jobName, serviceName, jobType, address, addressSelect, hours, days, months, years, jobStartDate, jobEndDate, jobDescription, jobPrice);
+        $('.invalid-feedback, .valid-feedback').text('');
+        Object.keys(errors).forEach(function (field) {
+          $('#' + field).toggleClass('is-invalid', true);
+          if (field === 'jobDuration' || field === 'hours' || field === 'days' || field === 'months' || field === 'years') {
+            $('#jobDurationerror').text(errors[field]);
+            // add invalid message
+            $('#jobDurationerror, #hours, #days, #months, #years').addClass('is-invalid');
+          }
+          $('#' + field).next('.invalid-feedback, .valid-feedback').text(errors[field]);
+        });
+        // console.log(errors);
+        if (Object.keys(errors).length > 0) {
+          event.preventDefault();
+          return;
+        }
+
+        // get current user from local storage
+        const currentUser = JSON.parse(localStorage.getItem('user'));
+        const jobOwner = currentUser._id;
+
+        //create jobLocation array with address, longitude and latitude (set longitude and latitude as numbers)
+        const jobLocation = {
+          address,
+          longitude: Number(coordinates.split(',')[0]),
+          latitude: Number(coordinates.split(',')[1])
+        };
+
+        const jobDuration = {
+          hours: hours ? hours : 0,
+          days: days ? days : 0,
+          months: months ? months : 0,
+          years: years ? years : 0
+        };
+
+        let data = {
+          jobName,
+          jobDescription,
+          serviceName,
+          jobType,
+          jobLocation,
+          jobDuration,
+          jobStartDate,
+          jobEndDate,
+          jobStatus: 'available',
+          jobPrice: Number(jobPrice),
+          jobOwner
+        };
+
+        //convert data to JSON string
+        data = JSON.stringify(data);
+        // console.log(data);
+        event.preventDefault();
+
+        //send data to backend with POST request https://techgeeksprotobackend.azurewebsites.net/api/Job/createJob
+        $.ajax({
+          url: 'https://techgeeksprotobackend.azurewebsites.net/api/Job/createJob',
+          type: 'POST',
+          data: data,
+          contentType: 'application/json',
+          success: function (data) {
+            const job = data.job;
+            // show success message using toastr
+            toastr.success('Job successfully created!', '', {
+              timeOut: 500,
+              fadeOut: 500,
+              onHidden: function () {
+                // redirect to created job page
+                window.location.href = '../job/view_job.htm?jobId=' + job._id;
+              }
+            });
+
+            // make submit button disabled
+            $('#create_job_form button[type="submit"]').attr('disabled', true);
+
+            // redirect to login page after 1 seconds
+            // make page fade out
+            // $('#create_job_container').fadeOut(1000);
+            // setTimeout(function () {
+            //   window.location.href = 'login.htm';
+            // }, 2000);
+          },
+          error: function (data) {
+            //display error message as toast
+            toastr.error('Something went wrong');
+
+            // show response from server using a modal
+            $('#responseModal').attr('hidden', false);
+            $('#responseModal').modal('show');
+            if (data.responseJSON.message) {
+              $('#responseModal .modal-body').html(data.responseJSON.message);
+            } else {
+              $('#responseModal .modal-body').html(data.responseJSON.error);
+            }
+          }
+        });
+
+      });
+
+      // validateJobFunction
+      const validateJobFunction = (jobName, serviceName, jobType, address, addressSelect, hours, days, months, years, jobStartDate, jobEndDate, jobDescription, jobPrice) => {
+
+        const errors = {};
+        let jobDuration = 0;
+
+        // check if jobName is empty
+        if (!jobName) {
+          errors.jobName = 'Please enter job name.';
+        }
+
+        // check if serviceName is empty
+        if (!serviceName) {
+          errors.serviceName = 'Please enter service name.';
+        }
+
+        // check if jobType is empty
+        if (!jobType) {
+          errors.jobType = 'Please enter job type.';
+        }
+
+        // check if address is empty
+        if (address != addressSelect) {
+          errors.address = 'Please enter address.';
+        }
+
+        // Check if at least one of hours, days, months, or years is entered
+        if (!hours && !days && !months && !years) {
+          errors.jobDuration = 'Please enter job duration.';
+        }
+
+        // Validate individual time units
+        if (hours && hours > 24) {
+          errors.hours = 'Hours cannot be more than 24.';
+          errors.jobDuration = 'Please enter job duration.';
+        } 
+        
+        if (hours && hours < 1) {
+          errors.hours = 'Hours cannot be less than 1.';
+          errors.jobDuration = 'Please enter job duration.';
+        }
+        
+        if (days && days > 31) {
+          errors.days = 'Days cannot be more than 31.';
+          errors.jobDuration = 'Please enter job duration.';
+        } 
+        
+        if (days && days < 1) {
+          errors.days = 'Days cannot be less than 1.';
+          errors.jobDuration = 'Please enter job duration.';
+        }
+
+        if (months && months > 12) {
+          errors.months = 'Months cannot be more than 12.';
+          errors.jobDuration = 'Please enter job duration.';
+        } 
+        
+        if (months && months < 1) {
+          errors.months = 'Months cannot be less than 1.';
+          errors.jobDuration = 'Please enter job duration.';
+        }
+
+        if (years && years > 10) {
+          errors.years = 'Years cannot be more than 10.';
+          errors.jobDuration = 'Please enter job duration.';
+        } 
+        
+        if (years && years < 1) {
+          errors.years = 'Years cannot be less than 1.';
+          errors.jobDuration = 'Please enter job duration.';
+        }
+
+        // if all time units are NaN, show error
+        if (isNaN(hours) && isNaN(days) && isNaN(months) && isNaN(years)) {
+          errors.hours = 'Please enter job duration.';
+          errors.days = 'Please enter job duration.';
+          errors.months = 'Please enter job duration.';
+          errors.years = 'Please enter job duration.';
+          errors.jobDuration = 'Please enter job duration.';
+        }
+
+        // calculate job duration in hours
+        jobDuration = (hours ? hours : 0) + (days ? days * 24 : 0) + (months ? months * 24 * 30 : 0) + (years ? years * 24 * 30 * 12 : 0);
+
+        // check if jobDuration is less than 1 hour
+        if (jobDuration < 1) {
+          errors.hours = 'Job duration cannot be less than 1 hour.';
+          errors.days = 'Job duration cannot be less than 1 hour.';
+          errors.months = 'Job duration cannot be less than 1 hour.';
+          errors.years = 'Job duration cannot be less than 1 hour.';
+          errors.jobDuration = 'Job duration cannot be less than 1 hour.';
+        }
+
+        // check if jobStartDate is empty
+        if (!jobStartDate) {
+          errors.jobStartDate = 'Please enter job start date.';
+        }
+
+        // check if jobEndDate is empty
+        if (!jobEndDate) {
+          errors.jobEndDate = 'Please enter job end date.';
+        }
+
+        // check if jobStartDate is before today
+        if (jobStartDate < new Date().toISOString().split('T')[0]) {
+          errors.jobStartDate = 'Job start date cannot be before today.';
+        }
+
+        // check if jobEndDate is before jobStartDate
+        if (jobEndDate < jobStartDate) {
+          errors.jobEndDate = 'Job end date cannot be before job start date.';
+        }
+
+        // Calculate the difference between jobEndDate and jobStartDate in hours, include the last day
+        const jobDurationInHours = Math.ceil((new Date(jobEndDate).getTime() - new Date(jobStartDate).getTime()) / (1000 * 60 * 60)) + 24;
+
+        // check if jobDuration is more than jobDurationInHours
+        if (jobDuration > jobDurationInHours) {
+          errors.jobDuration = 'Job duration cannot be more than ' + jobDurationInHours + ' hours.';
+        }
+
+        // check if jobDescription is empty
+        if (!jobDescription) {
+          errors.jobDescription = 'Please enter job description.';
+        }
+
+        // check if jobPrice is empty
+        if (!jobPrice) {
+          errors.jobPrice = 'Please enter job budget.';
+        }
+
+        return errors;
+
+      }
+
+    });
+  </script>
+
+<style>
+  .is-valid~.valid-feedback {
+    display: block;
+  }
+</style>
+
+</head>
+
+<body class="bg-light text-dark">
+
+  <!-- Top section  -->
+  <div id="create_job_container" class="container-fluid bg-light text-dark pt-2 col-7">
+
+    <!-- align center of page -->
+    <div class="row mx-auto my-auto">
+
+      <!-- Modal -->
+      <div id="responseModal" class="modal modal-dialog-centered" aria-hidden="true" tabindex="-1" hidden>
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-body"></div>
+            <!-- Dismiss Button in Footer -->
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Dismiss</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Header -->
+      <div class="row mx-auto my-auto mb-4">
+        <!-- Go back button left navigates to client home page -->
+        <div class="col-6 text-start">
+          <button class="btn btn-outline-dark btn-sm" onclick="window.location.href = '../homes/client_home.htm'">
+            <i class="fa fa-arrow-left"></i>
+          </button>
+        </div>
+
+        <!-- Nav -->
+        <div class="col-6 text-end">
+          <!-- Hamburger menu -->
+          <div class="dropdown">
+            <button class="btn btn-outline-dark btn-sm dropdown-toggle" type="button" id="dropdownMenuButton"
+              data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="fa fa-bars"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton">
+              <li>
+                <button class="dropdown-item" type="button" onclick="clearLocalStorageAndRedirect()">Log Out</button>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Title -->
+      <div class="row mx-auto my-auto mt-3 mb-3">
+        <p class="fs-5 fw-bold">Add information to hire your required person</p>
+      </div>
+
+      <!-- Create Job Form align center of page -->
+      <div class="d-grid gap-2 col-12 mx-auto my-auto">
+        <form id="create_job_form" class="row needs-validation" novalidate>
+
+          <!-- Job Title -->
+          <div class="row mx-auto my-auto">
+            <div class="mb-3">
+              <label for="jobName" class="form-label fw-medium text-body-secondary">Job Title</label>
+              <input type="text" class="form-control border-0 p-3 shadow-lg" id="jobName" placeholder="Enter Job Title"
+                required>
+              <div class="invalid-feedback"></div>
+            </div>
+          </div>
+
+          <!-- Service Name, can select one -->
+          <!-- serviceName: ["IT Support Level 1", "IT Support Level 2", "IT Support Level 3", "IT Support Level 4",
+        "IT Technician", "Network Engineer", "Cloud Services Engineer", "Software Engineer", "Software Developer",
+        "Web Developer", "Web Designer", "Graphic Designer", "UX Designer", "UI Designer", "Data Scientist",
+        "Data Analyst", "Data Engineer", "Data Architect", "Database Administrator", "Database Developer",
+        "Database Manager", "Database Architect", "Database Designer", "Database Analyst", "Database Engineer",
+        "Cyber Security Analyst", "Cyber Security Engineer", "Cyber Security Architect", "Cyber Security Manager"
+        ], -->
+          <div class="row mx-auto my-auto">
+            <div class="col-12 col-sm-12 mb-3">
+              <label for="serviceName" class="form-label fw-medium text-body-secondary">Service Name</label>
+              <select id="serviceName" class="form-select border-0 p-3 shadow-lg" required>
+                <option value="" selected disabled hidden>Enter Service</option>
+                <option value="IT Support Level 1">IT Support Level 1</option>
+                <option value="IT Support Level 2">IT Support Level 2</option>
+                <option value="IT Support Level 3">IT Support Level 3</option>
+                <option value="IT Support Level 4">IT Support Level 4</option>
+                <option value="IT Technician">IT Technician</option>
+                <option value="Network Engineer">Network Engineer</option>
+                <option value="Cloud Services Engineer">Cloud Services Engineer</option>
+                <option value="Software Engineer">Software Engineer</option>
+                <option value="Software Developer">Software Developer</option>
+                <option value="Web Developer">Web Developer</option>
+                <option value="Web Designer">Web Designer</option>
+                <option value="Graphic Designer">Graphic Designer</option>
+                <option value="UX Designer">UX Designer</option>
+                <option value="UI Designer">UI Designer</option>
+                <option value="Data Scientist">Data Scientist</option>
+                <option value="Data Analyst">Data Analyst</option>
+                <option value="Data Engineer">Data Engineer</option>
+                <option value="Data Architect">Data Architect</option>
+                <option value="Database Administrator">Database Administrator</option>
+                <option value="Database Developer">Database Developer</option>
+                <option value="Database Manager">Database Manager</option>
+                <option value="Database Architect">Database Architect</option>
+                <option value="Database Designer">Database Designer</option>
+                <option value="Database Analyst">Database Analyst</option>
+                <option value="Database Engineer">Database Engineer</option>
+                <option value="Cyber Security Analyst">Cyber Security Analyst</option>
+                <option value="Cyber Security Engineer">Cyber Security Engineer</option>
+                <option value="Cyber Security Architect">Cyber Security Architect</option>
+                <option value="Cyber Security Manager">Cyber Security Manager
+                </option>
+              </select>
+              <div class="invalid-feedback"></div>
+            </div>
+          </div>
+
+          <!-- Job Type -->
+          <!-- 
+          "full-time",
+          "part-time",
+          "contract",
+          "temporary",
+          "volunteer",
+          "internship"
+         -->
+          <div class="row mx-auto my-auto">
+            <div class="col-12 col-sm-12 mb-3">
+              <label for="jobType" class="form-label fw-medium text-body-secondary">Job Type</label>
+              <select id="jobType" class="form-select border-0 p-3 shadow-lg" required>
+                <option value="" selected disabled hidden>Enter Job Type</option>
+                <option value="full-time">Full Time</option>
+                <option value="part-time">Part Time</option>
+                <option value="contract">Contract</option>
+                <option value="temporary">Temporary</option>
+                <option value="volunteer">Volunteer</option>
+                <option value="internship">Internship</option>
+              </select>
+              <div class="invalid-feedback"></div>
+            </div>
+          </div>
+
+          <!-- Address (autocomplete on keyup after 3 characters), populate list of addresses -->
+          <div class="row mx-auto my-auto">
+            <div class="col-12 col-sm-12 mb-3">
+              <label for="address" class="form-label">Address</label>
+              <input type="text" class="form-control border-0 p-3 shadow-lg" id="address"
+                placeholder="&#xf041;    Enter location where you want service" style="font-family:Arial, FontAwesome"
+                required>
+              <div class="invalid-feedback"></div>
+              <select id="address-select" class="form-select mt-2" style="display: none;"></select>
+              <input type="hidden" id="coordinates">
+            </div>
+          </div>
+
+          <!-- Job Duration, can select hours, days, months, years -->
+          <div class="row mx-auto my-auto">
+            <div class="col-12 mb-3">
+              <label for="jobDuration" class="form-label fw-medium text-body-secondary">Job Duration</label>
+              <div class="input-group" id=" jobDuration">
+                <input type="number" class="form-control border-0 p-3 shadow-lg" id="hours" placeholder="Hours"
+                  required>
+                <input type="number" class="form-control border-0 p-3 shadow-lg" id="days" placeholder="Days" required>
+                <input type="number" class="form-control border-0 p-3 shadow-lg" id="months" placeholder="Months"
+                  required>
+                <input type="number" class="form-control border-0 p-3 shadow-lg rounded-end" id="years"
+                  placeholder="Years" required>
+                <div class="invalid-feedback" id="jobDurationerror"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Start date and finish date display side by side -->
+          <div class="row mx-auto my-auto">
+            <div class="col-6 col-sm-6 mb-3">
+              <label for="jobStartDate" class="form-label fw-medium text-body-secondary">Start Date</label>
+              <input type="date" class="form-control border-0 p-3 shadow-lg" id="jobStartDate" required>
+              <div class="invalid-feedback"></div>
+            </div>
+            <div class="col-6 col-sm-6 mb-3">
+              <label for="jobEndDate" class="form-label fw-medium text-body-secondary">Finish Date</label>
+              <input type="date" class="form-control border-0 p-3 shadow-lg" id="jobEndDate" required>
+              <div class="invalid-feedback"></div>
+            </div>
+          </div>
+
+          <!-- Job Description -->
+          <div class="row mx-auto my-auto">
+            <div class="mb-3">
+              <label for="jobDescription" class="form-label fw-medium text-body-secondary">Job Description</label>
+              <textarea class="form-control border-0 p-3 shadow-lg rounded-end" id="jobDescription" rows="3"
+                placeholder="&#xf040;    Enter details here" style="font-family:Arial, FontAwesome" required></textarea>
+              <div class="invalid-feedback"></div>
+            </div>
+          </div>
+
+          <!-- Job Budget -->
+          <div class="row mx-auto my-auto">
+            <div class="mb-3">
+              <label for="jobPrice" class="form-label fw-medium text-body-secondary">Job Budget</label>
+              <div class="input-group">
+                <span class="input-group-text border-0 p-3 shadow-lg bg-white">AUD</span>
+                <input type="number" class="form-control border-0 p-3 shadow-lg rounded-end" id="jobPrice"
+                  placeholder="Please mention budget per hour for this task" required>
+                <div class="invalid-feedback"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Submit button -->
+          <div class="row mt-4 mb-5 mx-auto my-auto">
+            <div class="col-12 col-sm-12 mb-3">
+              <div class="d-grid gap-2">
+                <button class="btn btn-lg p-3 btn-dark" type="submit">Post Job</button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</body>

@@ -1,0 +1,8 @@
+dump
+cd C:\Program Files\MongoDB\Tools\100\bin
+mongodump --uri="mongodb+srv://admin:password1234@proto.3giiwk0.mongodb.net/?retryWrites=true&w=majority"
+
+
+restore
+cd C:\Program Files\MongoDB\Tools\100\bin
+mongorestore --uri="mongodb+srv://admin:password1234@proto.3giiwk0.mongodb.net/?retryWrites=true&w=majority" dump/

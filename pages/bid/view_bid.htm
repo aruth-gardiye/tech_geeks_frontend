@@ -1,0 +1,1284 @@
+<!-- View Bid Page for the provider -->
+<!-- Path: pages/bid/view_bid.htm -->
+
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>View Bid</title>
+
+  <!-- Bootstrap -->
+  <link rel="stylesheet" href="../../utils/bootstrap-5.3/bootstrap.min.css" />
+  <script type='text/javascript' src="../../utils/bootstrap-5.3/bootstrap.bundle.min.js"></script>
+
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="../../utils/font-awesome-4.7.0/css/font-awesome.min.css">
+
+  <!-- JQuery -->
+  <script type='text/javascript' src="../../utils/jquery-3.7.1.min.js"></script>
+
+  <!-- Bootstrap Select wait for JQuery to load before loading -->
+  <link rel="stylesheet" href="../../utils/bootstrap-select-1.14.0-beta2/bootstrap-select.min.css" />
+  <script type='text/javascript' src="../../utils/bootstrap-select-1.14.0-beta2/bootstrap-select.min.js"></script>
+
+  <!-- Cleave
+  <script type='text/javascript' src="../../utls/cleave.min.js"></script>
+  <script type='text/javascript' src="../../utls/cleave-phone.au.js"></script>
+  <script type='text/javascript' src="../../utls/cleave_format.js"></script> -->
+
+  <!-- Toastr -->
+  <link rel="stylesheet" href="../../utils/toastr-2.1.1/toastr.min.css" />
+  <script type='text/javascript' src="../../utils/toastr-2.1.1/toastr.min.js"></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="../../utils/main.css" />
+
+  <script>
+    $(document).ready(function () {
+      $('.selectpicker').selectpicker({
+        size: 4
+      });
+    });
+  </script>
+
+  <script>
+    // function to clear the local storage and redirect to the login page
+    function clearLocalStorageAndRedirect() {
+      // Clear the local storage
+      localStorage.clear();
+
+      // Redirect to the login page
+      window.location.href = '../login.htm';
+    }
+  </script>
+
+  <!-- 
+      {
+      "job": {
+          "jobLocation": {
+              "address": "20 Seaview Street, Tweed Heads South New South Wales 2486, Australia",
+              "longitude": 153.518403,
+              "latitude": -28.206651
+          },
+          "jobDuration": {
+              "hours": 8,
+              "days": 0,
+              "months": 0,
+              "years": 0
+          },
+          "_id": "6514ff4f428a4bf71f06c990",
+          "jobName": "Example Job 01 Name Update",
+          "jobDescription": "Example Job 01 Description Updated",
+          "serviceName": "IT Support Level 1",
+          "jobType": "full-time",
+          "jobStartDate": "2023-09-27T14:00:00.000Z",
+          "jobEndDate": "2023-09-28T14:00:00.000Z",
+          "jobStatus": "completed",
+          "jobPrice": 40,
+          "jobOwner": {
+              "_id": "6514f7958a8ed8f82295df31",
+              "username": "johndoe_client",
+              "firstName": "John",
+              "lastName": "Doe"
+          },
+          "jobApplicants": [
+              {
+                  "userId": "6514f86d8a8ed8f82295df3a",
+                  "username": "jacksonpot_provider",
+                  "firstName": "Jackson",
+                  "lastName": "Pot",
+                  "bid": 37,
+                  "bidStatus": "assigned"
+              },
+              {
+                  "userId": "6514f8218a8ed8f82295df37",
+                  "username": "janedoe_provider",
+                  "firstName": "Jane",
+                  "lastName": "Doe",
+                  "bid": 40,
+                  "bidStatus": "submitted"
+              }
+          ],
+          "__v": 2,
+          "selectedBid": {
+              "_id": "6514f86d8a8ed8f82295df3a",
+              "username": "jacksonpot_provider",
+              "firstName": "Jackson",
+              "lastName": "Pot"
+          }
+      }
+  }
+  -->
+
+  <!-- Script to update selectedBid or jobStatus based on passed status -->
+  <script>
+    function showBidModal(job, task) {
+      // display the modal
+      // include the current bids, and minimum bid amount required
+      // Title - "Submit Bid"
+      // Subtitle - `Minimum Bid Amount:` + minimum bid amount required
+      // Body - list of current bids
+      // Footer - Submit Bid button
+      // On click of Submit Bid button, call the updateSelectedBid function
+
+      // get the modal element
+      const bidModal = document.getElementById('bidModal');
+
+      // get modal-dialog element
+      const modalDialog = document.getElementById('bidModalDialog');
+
+      // select the modal content from bidModal
+      const modalContent = document.getElementById('bidModalContent');
+
+      // clear the modal content
+      modalContent.innerHTML = '';
+
+      // create the modal header
+      const modalHeader = document.createElement('div');
+      modalHeader.classList.add('modal-header');
+
+      // create the modal title
+      const modalTitle = document.createElement('h5');
+      modalTitle.classList.add('modal-title');
+      if (task === "update") {
+        modalTitle.textContent = 'Update Bid';
+      }
+      else {
+        modalTitle.textContent = 'Submit Bid';
+      }
+
+      // create the modal subtitle
+      const modalSubtitle = document.createElement('p');
+      modalSubtitle.classList.add('my-auto', 'modal-subtitle', 'text-muted', 'fw-normal', 'fs-6');
+      modalSubtitle.textContent = `Minimum Bid Amount: $${job.jobPrice}`;
+
+      // add the modal title and subtitle to the modal header
+      modalHeader.appendChild(modalTitle);
+      modalHeader.appendChild(modalSubtitle);
+
+      // add the modal header to the modal content
+      modalContent.appendChild(modalHeader);
+
+      // create the modal body
+      const modalBody = document.createElement('div');
+      modalBody.classList.add('modal-body');
+
+      // create the modal body content
+      const modalBodyContent = document.createElement('div');
+      modalBodyContent.classList.add('row', 'mx-auto', 'mb-2', 'p-0', 'text-center', 'text-dark', 'fw-bold', 'fs-6', 'justify-content-center');
+
+      // create a column for the bid amount
+      const bidAmountColumn = document.createElement('div');
+      bidAmountColumn.classList.add('col-auto', 'align-self-center', 'text-start', 'ms-3');
+
+      // create a div for inputting the bid amount
+      const bidAmount = document.createElement('div');
+      bidAmount.classList.add('fs-6');
+      const bidAmountIcon = document.createElement('span');
+      bidAmountIcon.classList.add('fa', 'fa-money', 'me-1');
+      bidAmount.appendChild(bidAmountIcon);
+      bidAmount.appendChild(document.createTextNode('Bid Amount'));
+      // bidAmountColumn.appendChild(bidAmount);
+
+      // append the bid amount column to the modal body content
+      // modalBodyContent.appendChild(bidAmountColumn);
+
+      // create a column for the bid amount input
+      const bidAmountInputColumn = document.createElement('div');
+      bidAmountInputColumn.classList.add('col-auto', 'align-self-center', 'text-start', 'my-4', 'ms-3');
+
+      // create a div for the bid amount input
+      const bidAmountInput = document.createElement('div');
+      bidAmountInput.classList.add('fs-6');
+      const bidAmountInputField = document.createElement('input');
+      bidAmountInputField.classList.add('form-control', 'form-control-sm', 'border-secondary-subtle', 'rounded-3', 'text-dark', 'fw-bold', 'fs-6');
+      bidAmountInputField.type = 'number';
+      bidAmountInputField.min = job.jobPrice;
+      if (task === "update") {
+        bidAmountInputField.placeholder = 'Update Bid Amount';
+      }
+      else {
+        bidAmountInputField.placeholder = 'Enter Bid Amount';
+      }
+      bidAmountInputField.id = 'bidAmountInput';
+      bidAmountInputField.required = true;
+      bidAmountInput.appendChild(bidAmountInputField);
+      bidAmountInputColumn.appendChild(bidAmountInput);
+
+      // append the bid amount input column to the modal body content
+      modalBodyContent.appendChild(bidAmountInputColumn);
+
+      // append the modal body content to the modal body
+      modalBody.appendChild(modalBodyContent);
+
+      // create the modal footer
+      const modalFooter = document.createElement('div');
+      modalFooter.classList.add('modal-footer');
+
+      // create the submit bid button
+      const submitBidButton = document.createElement('button');
+      submitBidButton.classList.add('btn', 'btn-dark');
+      if (task === "update") {
+        submitBidButton.textContent = 'Update Bid';
+      }
+      else {
+        submitBidButton.textContent = 'Submit Bid';
+      }
+
+      // add an event listener to the submit bid button
+      submitBidButton.addEventListener('click', () => {
+        // get the bid amount from the input field
+        const bidAmount = document.getElementById('bidAmountInput').value;
+
+        // check if the bid amount is valid
+        if (bidAmount > job.jobPrice) {
+          // display an error message
+          toastr.error('Bid amount cannot be more than the minimum bid amount required');
+        }
+        else {
+          // call the updateBid function
+          updateBid(job, bidAmount, task);
+        }
+      });
+
+      // create the close button
+      const closeButton = document.createElement('button');
+      closeButton.classList.add('btn', 'btn-secondary');
+      closeButton.setAttribute('data-bs-target', '#bidModal');
+      closeButton.setAttribute('data-bs-dismiss', 'modal');
+      closeButton.textContent = 'Close';
+
+      // append the submit bid button and close button to the modal footer
+      modalFooter.appendChild(submitBidButton);
+      modalFooter.appendChild(closeButton);
+
+      // append the modal body and footer to the modal content
+      modalContent.appendChild(modalBody);
+      modalContent.appendChild(modalFooter);
+
+      // append the modal content to the modal
+      modalDialog.appendChild(modalContent);
+
+      // vertically and horizontally center the modal
+      $('#bidModal').on('shown.bs.modal', function () {
+        $('#bidModal').css('display', 'flex');
+        $('#bidModal').css('align-items', 'center');
+        $('#bidModal').css('justify-content', 'center');
+      });
+
+      // remove hidden class from the modal
+      $('#bidModal').removeAttr('hidden');
+      
+      // show the modal
+      $('#bidModal').modal('show');
+      
+    }
+  </script>
+
+  <script type="text/javascript">
+    // function to update the selected bid
+    function updateBid(job, bidAmount, task) {
+      // get the job id from job
+      const jobId = job._id;
+
+      // get the user id from the local storage
+      const user = JSON.parse(localStorage.getItem('user'));
+      const userId = user._id;
+
+      // create the request body
+      const requestBody = {
+        jobId: jobId,
+        userId: userId,
+        bid: bidAmount
+      };
+
+      // if task is submit, set url
+      let url = 'https://techgeeksprotobackend.azurewebsites.net/api/Job/submitBid';
+
+      // if task is update, set url
+      if (task === "update") {
+        url = 'https://techgeeksprotobackend.azurewebsites.net/api/Job/updateBid';
+      }
+
+      // make a request to the backend to update the selected bid
+      $.ajax({
+        url: url,
+        type: 'PATCH',
+        data: JSON.stringify(requestBody),
+        contentType: 'application/json',
+        success: function (data) {
+            // display a success message
+            if (task === "update") {
+              toastr.success('Bid updated successfully', '', { timeOut: 5000 });
+            }
+            else {
+              toastr.success('Bid submitted successfully', '', { timeOut: 5000 });
+            }
+
+            // hide the modal
+            $('#bidModal').modal('hide');
+
+            // reload the page after 2 seconds
+            setTimeout(() => {
+              window.location.reload();
+            }, 2000);
+          },
+        error: function (data) {
+          // display an error message
+          if (data.responseJSON.message) {
+            toastr.error(data.responseJSON.message);
+          } else {
+            toastr.error(data.responseJSON.error);
+          }
+        }
+      });
+    }
+
+  </script>
+
+  <script>
+    // Function to get the job details
+    function getJobDetails() {
+      // Get the job id from the url of the page
+      const urlParams = new URLSearchParams(window.location.search);
+      const jobId = urlParams.get('jobId');
+
+      // Get the job details from the database
+      $.ajax({
+        url: 'https://techgeeksprotobackend.azurewebsites.net/api/Job/getJobById/' + jobId,
+        type: 'GET',
+        success: function (data) {
+          // Parse the JSON data
+          var job = data.job;
+
+          // Check if the job details were retrieved successfully
+          if (job) {
+            // get the container element for the job details
+            const jobDetailsContainer = document.getElementById('jobDetailsContainer');
+
+            // create a new row element
+            const row = document.createElement('div');
+            row.classList.add('row', 'mx-auto', 'mb-3', 'p-2', 'shadow', 'bg-light', 'text-center', 'rounded-3', 'text-secondary');
+
+            // create jobName row to display jobTitle
+            const jobNameRow = document.createElement('div');
+            jobNameRow.classList.add('row', 'mt-3', 'ms-4', 'mb-0', 'px-1', 'py-0', 'text-center', 'text-dark', 'fw-bold', 'fs-5', 'justify-content-start');
+            jobNameRow.textContent = job.jobName;
+
+            // append the jobName row to the row
+            row.appendChild(jobNameRow);
+
+            // create serviceName row to display serviceName
+            const serviceNameRow = document.createElement('div');
+            serviceNameRow.classList.add('row', 'mt-1', 'ms-4', 'mb-4', 'p-1', 'text-center', 'text-secondary', 'fs-6', 'justify-content-start');
+            serviceNameRow.textContent = job.serviceName + ' required'
+
+            // append the serviceName row to the row
+            row.appendChild(serviceNameRow);
+
+            // create row to display avatar, jobOwner name, start date
+            const postedByRow = document.createElement('div');
+            postedByRow.classList.add('row', 'mx-auto', 'mb-1', 'p-0');
+
+            // create a column for the avatar
+            const avatarColumn = document.createElement('div');
+            avatarColumn.classList.add('col-auto', 'align-self-center', 'text-start', 'ms-3');
+
+            // create a div for the avatar
+            const avatar = document.createElement('div');
+            avatar.classList.add('rounded-circle', 'bg-dark-subtle', 'd-flex', 'justify-content-center', 'align-items-center', 'p-0');
+            const avatarIcon = document.createElement('img');
+            // use avatar_m.png inside the images folder
+            avatarIcon.src = '../../images/avatar_m.png';
+            // change the width and height of the avatar
+            avatarIcon.style.width = '70px';
+            avatarIcon.style.height = '70px';
+            avatar.appendChild(avatarIcon);
+            avatarColumn.appendChild(avatar);
+            postedByRow.appendChild(avatarColumn);
+
+            // create a column for "Posted By" and jobOwner name
+            const postedByColumn = document.createElement('div');
+            postedByColumn.classList.add('col-auto', 'align-self-center', 'text-start', 'ms-1');
+
+            // create row for "Posted By"
+            const postedBy = document.createElement('div');
+            postedBy.classList.add('row', 'mx-auto', 'mb-1', 'p-0', 'text-center', 'text-secondary', 'fw-medium', 'fs-6', 'justify-content-start');
+            postedBy.textContent = 'Posted By';
+
+            // append the postedBy row to the postedBy column
+            postedByColumn.appendChild(postedBy);
+
+            // create row for jobOwner name
+            const jobOwnerName = document.createElement('div');
+            jobOwnerName.classList.add('row', 'mx-auto', 'mb-1', 'p-0', 'text-center', 'text-dark', 'fw-bold', 'fs-6', 'justify-content-start');
+            jobOwnerName.textContent = `${job.jobOwner.firstName} ${job.jobOwner.lastName}`;
+
+            // append the jobOwnerName row to the postedBy column 
+            postedByColumn.appendChild(jobOwnerName);
+
+            // append the postedBy column to the row
+            postedByRow.appendChild(postedByColumn);
+
+            // create a column for the start date
+            const startDateColumn = document.createElement('div');
+            startDateColumn.classList.add('col-auto', 'text-start', 'mx-auto', 'mt-4', 'me-3');
+
+            // create a div for the start date
+            const startDate = document.createElement('div');
+            startDate.classList.add('w-100', 'fs-6');
+            const startDateIcon = document.createElement('span');
+            startDateIcon.classList.add('fa', 'fa-calendar-times-o', 'me-1');
+            startDate.appendChild(startDateIcon);
+            startDate.appendChild(document.createTextNode(new Date(job.jobStartDate).toDateString()));
+            startDateColumn.appendChild(startDate);
+
+            // append the start date column to the row
+            postedByRow.appendChild(startDateColumn);
+
+            // append the postedBy row to the row
+            row.appendChild(postedByRow);
+
+            // create row to display address
+            const addressRow = document.createElement('div');
+            addressRow.classList.add('row', 'mx-auto', 'mt-4', 'mb-1', 'p-0');
+
+            // create a column for the address icon
+            const addressIconColumn = document.createElement('div');
+            addressIconColumn.classList.add('col-auto', 'align-self-center', 'text-start', 'ms-3');
+
+            // create a div for the address icon
+            const addressIcon = document.createElement('div');
+            addressIcon.classList.add('rounded-circle', 'bg-secondary-subtle', 'd-flex', 'justify-content-center', 'align-items-center', 'p-0', 'text-white');
+            addressIcon.style.width = '70px';
+            addressIcon.style.height = '70px';
+            const addressIconElement = document.createElement('i');
+            addressIconElement.classList.add('fa', 'fa-map-marker', 'fa-2x', 'text-secondary');
+            addressIcon.appendChild(addressIconElement);
+            addressIconColumn.appendChild(addressIcon);
+
+            // create a column for "Location" and address
+            const addressLocation = document.createElement('div');
+            addressLocation.classList.add('col-auto', 'align-self-center', 'text-start', 'ms-1');
+
+            // create row for "Location"
+            const location = document.createElement('div');
+            location.classList.add('row', 'mx-auto', 'mb-1', 'p-0', 'text-center', 'text-secondary', 'fw-medium', 'fs-6', 'justify-content-start');
+            location.textContent = 'Location';
+
+            // append the location row to the addressLocation column
+            addressLocation.appendChild(location);
+
+            // create row for address
+            const addressText = document.createElement('div');
+            addressText.classList.add('row', 'mx-auto', 'mb-1', 'p-0', 'text-center', 'text-dark', 'fw-bold', 'fs-6', 'justify-content-start');
+            if (job.jobLocation.address.length > 68) {
+              addressText.textContent = `${job.jobLocation.address.substring(0, 78)}...`;
+            } else {
+              addressText.textContent = `${job.jobLocation.address}`;
+            }
+
+            // append the addressText row to the addressLocation column
+            addressLocation.appendChild(addressText);
+
+            // append the addressIconColumn to the addressRow
+            addressRow.appendChild(addressIconColumn);
+            addressRow.appendChild(addressLocation);
+
+            // append the addressRow to the row
+            row.appendChild(addressRow);
+
+
+            // create row to display address
+            const durationRow = document.createElement('div');
+            durationRow.classList.add('row', 'mx-auto', 'mt-4', 'mb-1', 'p-0');
+
+            // create a column for the address icon
+            const durationIconColumn = document.createElement('div');
+            durationIconColumn.classList.add('col-auto', 'align-self-center', 'text-start', 'ms-3');
+
+            // create a div for the address icon
+            const durationIcon = document.createElement('div');
+            durationIcon.classList.add('rounded-circle', 'bg-secondary-subtle', 'd-flex', 'justify-content-center', 'align-items-center', 'p-0', 'text-white');
+            durationIcon.style.width = '70px';
+            durationIcon.style.height = '70px';
+            const durationIconElement = document.createElement('i');
+            durationIconElement.classList.add('fa', 'fa-clock-o', 'fa-2x', 'text-secondary');
+            durationIcon.appendChild(durationIconElement);
+            durationIconColumn.appendChild(durationIcon);
+
+            // create a column for "Location" and address
+            const durationTextColumn = document.createElement('div');
+            durationTextColumn.classList.add('col-auto', 'align-self-center', 'text-start', 'ms-1');
+
+            // create row for "Duration"
+            const duration = document.createElement('div');
+            duration.classList.add('row', 'mx-auto', 'mb-1', 'p-0', 'text-center', 'text-secondary', 'fw-medium', 'fs-6', 'justify-content-start');
+            duration.textContent = 'Duration';
+
+            // append the location row to the addressLocation column
+            durationTextColumn.appendChild(duration);
+
+            // create row for address
+            const durationText = document.createElement('div');
+            durationText.classList.add('row', 'mx-auto', 'mb-1', 'p-0', 'text-center', 'text-dark', 'fw-bold', 'fs-6', 'justify-content-start');
+            
+            // calculate the duration and display it in a understandable format
+            const durationInHours = job.jobDuration.hours + (job.jobDuration.days * 24) + (job.jobDuration.months * 30 * 24) + (job.jobDuration.years * 365 * 24);
+            // hours
+            if (durationInHours < 24) {
+              durationText.textContent = `For ${durationInHours} hrs`;
+              durationTextColumn.appendChild(durationText);
+            }
+            // hours and days
+            else if (durationInHours < 24 * 30) {
+              const days = Math.floor(durationInHours / 24);
+              const hours = durationInHours % 24;
+              durationText.textContent = `For ${days} days ${hours} hrs`;
+              durationTextColumn.appendChild(durationText);
+            }
+            // hours, days and months
+            else if (durationInHours < 24 * 30 * 12) {
+              const months = Math.floor(durationInHours / (24 * 30));
+              const days = Math.floor((durationInHours % (24 * 30)) / 24);
+              const hours = (durationInHours % (24 * 30)) % 24;
+              durationText.textContent = `For ${months} months ${days} days ${hours} hrs`;
+              durationTextColumn.appendChild(durationText);
+            }
+            // hours, days, months and years
+            else {
+              const years = Math.floor(durationInHours / (24 * 30 * 12));
+              const months = Math.floor((durationInHours % (24 * 30 * 12)) / (24 * 30));
+              const days = Math.floor(((durationInHours % (24 * 30 * 12)) % (24 * 30)) / 24);
+              const hours = ((durationInHours % (24 * 30 * 12)) % (24 * 30)) % 24;
+              durationText.textContent = `For ${years} years ${months} months ${days} days ${hours} hrs`;
+              durationTextColumn.appendChild(durationText);
+            }
+
+            // append the addressText row to the addressLocation column
+            durationTextColumn.appendChild(durationText);
+
+            // append the addressIconColumn to the addressRow
+            durationRow.appendChild(durationIconColumn);
+            durationRow.appendChild(durationTextColumn);
+
+            // append the addressRow to the row
+            row.appendChild(durationRow);
+
+            // create row to display description
+            const descriptionRow = document.createElement('div');
+            descriptionRow.classList.add('row', 'mx-auto', 'mt-4', 'mb-1', 'p-0');
+            
+            // create "Description" header
+            const descriptionHeader = document.createElement('h2');
+            descriptionHeader.classList.add('ms-3', 'mt-3', 'mb-1', 'fs-6', 'mb-2', 'fw-medium', 'd-flex', 'align-items-center');
+            
+            // create a div for the description content
+            const descriptionContent = document.createElement('div');
+            descriptionContent.classList.add('col-auto', 'align-self-center', 'text-start', 'ms-1');
+            descriptionContent.textContent = 'Description';
+
+            // append the description content to the description header
+            descriptionHeader.appendChild(descriptionContent);
+
+            // append the description header to the row
+            descriptionRow.appendChild(descriptionHeader);
+
+            // create row for the description text
+            const descriptionText = document.createElement('div');
+            descriptionText.classList.add('row', 'ms-3', 'mx-auto', 'mb-1', 'p-0');
+
+            // create div for the description text
+            const descriptionTextContent = document.createElement('div');
+            descriptionTextContent.classList.add('col-auto', 'align-self-center', 'text-start', 'fw-medium', 'text-dark', 'ms-1');
+            descriptionTextContent.textContent = job.jobDescription;
+
+            // append the description text to the row
+            descriptionText.appendChild(descriptionTextContent);
+
+            // append the descriptionRow to the row
+            descriptionRow.appendChild(descriptionText);
+
+            //add dividers
+            const divider2 = document.createElement('hr');
+            divider2.classList.add('my-2', 'mt-3', 'mb-0', 'mx-auto', 'border-secondary-subtle');
+            descriptionRow.appendChild(divider2);
+
+            // append the descriptionRow to the row
+            row.appendChild(descriptionRow);
+
+            // if user has already submitted a bid, display the bid details, and a button to update the bid
+            const user = JSON.parse(localStorage.getItem('user'));
+            const userId = user._id;
+
+            // check if the user has already submitted a bid
+            const bid = job.jobApplicants.find(jobApplicant => jobApplicant.userId === userId);
+
+            // filter out current user from the job applicants and get the remaining applicants
+            const otherJobApplicants = job.jobApplicants.filter(jobApplicant => jobApplicant.userId !== userId);
+
+            // create row for bid details
+            const bidDetailsRow = document.createElement('div');
+            bidDetailsRow.classList.add('row', 'mx-auto', 'mt-0', 'mb-1', 'p-0');
+
+            // create "Bid Details" header
+            const bidDetailsHeader = document.createElement('h2');
+            bidDetailsHeader.classList.add('ms-3', 'mt-3', 'mb-1', 'fs-6', 'mb-2', 'fw-medium', 'd-flex', 'align-items-center');
+
+            // create a div for the bid details content
+            const bidDetailsContent = document.createElement('div');
+            bidDetailsContent.classList.add('col-auto', 'align-self-center', 'text-start', 'ms-1');
+            bidDetailsContent.textContent = 'Bid Details';
+
+            // append the bid details content to the bid details header
+            bidDetailsHeader.appendChild(bidDetailsContent);
+
+            // append the bid details header to the row
+            bidDetailsRow.appendChild(bidDetailsHeader);
+
+            const bidDetailsSection = document.createElement('div');
+            bidDetailsSection.classList.add('row', 'ms-0', 'mx-auto', 'mb-1', 'p-0');
+
+            // if the user has already submitted a bid
+            if (bid) {
+              // create a row for the bid details
+              const bidDetailsRow = document.createElement('div');
+              bidDetailsRow.classList.add('row', 'w-50', 'mt-2', 'mb-2', 'bg-secondary-subtle', 'rounded-3', 'shadow-sm', 'mx-auto', 'p-3', 'justify-content-center', 'align-items-center');
+
+              // create a column for the bid details text
+              const bidDetailsTextRow = document.createElement('div');
+              bidDetailsTextRow.classList.add('row', 'mx-auto', 'align-self-center', 'fw-medium', 'text-dark-subtle', 'justify-content-center', 'text-center', 'text-dark', 'fs-6', 'mb-2');
+
+              // create a row for the update bid button
+              const updateBidButtonRow = document.createElement('div');
+              updateBidButtonRow.classList.add('row', 'justify-content-center');
+
+              // create a column for the update bid button
+              const updateBidButtonColumn = document.createElement('div');
+              updateBidButtonColumn.classList.add('col-auto');
+
+              // create a button group for the update bid button
+              const updateBidButtonGroup = document.createElement('div');
+              updateBidButtonGroup.classList.add('btn-group', 'w-auto');
+
+              // create a button to update the bid
+              const updateBidButton = document.createElement('button');
+              updateBidButton.classList.add('btn', 'btn-dark');
+              updateBidButton.textContent = 'Update Bid';
+
+              // add an event listener to the update bid button
+              updateBidButton.addEventListener('click', () => {
+                if (bid.bidStatus === "accepted") {
+                  showBidModal(job, "confirm");
+                }
+                else if (bid.bidStatus === "assigned") {
+                  showBidModal(job, "start");
+                }
+                else if (bid.bidStatus === "submitted") {
+                  // show the bid modal
+                  showBidModal(job, "update");
+                }
+                else {
+                  // display an error message
+                  toastr.error('Bid cannot be updated');
+                }
+              });
+
+              // append the update bid button to the button group
+              updateBidButtonGroup.appendChild(updateBidButton);
+
+              // append the button group to the column
+              updateBidButtonColumn.appendChild(updateBidButtonGroup);
+
+              // append the column to the row
+              updateBidButtonRow.appendChild(updateBidButtonColumn);
+
+              // display the bid details
+              if (bid.bidStatus === "accepted") {
+                bidDetailsTextRow.textContent = `Your bid of $${bid.bid} has been accepted, please confirm the job to start working`;
+                updateBidButton.textContent = 'Confirm Job';
+              }
+              else if (bid.bidStatus === "assigned") {
+                bidDetailsTextRow.textContent = `Your bid of $${bid.bid} has been accepted, you have been assigned the job`;
+                updateBidButton.textContent = 'Start Job';
+              }
+              else if (bid.bidStatus === "submitted") {
+                bidDetailsTextRow.textContent = `Your bid of $${bid.bid} has been submitted, please wait for the job owner to consider your bid, in the meantime you can update your bid`;
+                updateBidButton.textContent = 'Update Bid';
+              }
+
+              // append the bid details text to the column
+              bidDetailsRow.appendChild(bidDetailsTextRow);
+
+              // append the update bid button row to the bid details section
+              bidDetailsRow.appendChild(updateBidButtonRow);
+
+              // append the row to the bid details section
+              bidDetailsSection.appendChild(bidDetailsRow);
+            }
+
+            // append the bid details section to the row
+            bidDetailsRow.appendChild(bidDetailsSection);
+
+            // append the bidDetailsRow to the row
+            row.appendChild(bidDetailsRow);
+
+            // if there are other bid, show the other bids by anonymoizing the names
+            if (otherJobApplicants.length > 0) {
+
+              // create row for the other bid details text
+              const otherBidsDetailsText = document.createElement('div');
+              otherBidsDetailsText.classList.add('row', 'ms-3', 'mx-auto', 'mb-1', 'p-0');
+
+              // create div for the bid details text
+              const otherBidsDetailsTextContent = document.createElement('div');
+              otherBidsDetailsTextContent.classList.add('col-auto', 'align-self-center', 'text-start', 'fw-medium', 'text-secondary', 'ms-1');
+
+              // display the current bids
+              otherBidsDetailsTextContent.textContent = 'Other Bids: ';
+
+              // create a div for the current bids
+              const currentBids = document.createElement('div');
+              currentBids.classList.add('d-flex', 'justify-content-center', 'align-items-center', 'w-100', 'mt-2', 'mb-3', 'text-dark');
+
+              // create a rounded div for each bid
+              otherJobApplicants.forEach(jobApplicant => {
+                // create a rounded div for the bid amount
+                const bidAmountDiv = document.createElement('div');
+                bidAmountDiv.classList.add('rounded-3', 'bg-success', 'py-1', 'px-2', 'me-2');
+                const bid = document.createElement('p');
+                bid.classList.add('fs-6', 'fw-medium', 'm-0', 'text-white');
+                const bidIcon = document.createElement('span');
+                bidIcon.classList.add('fa', 'fa-money', 'me-2', 'text-white');
+                bid.appendChild(bidIcon);
+                bid.appendChild(document.createTextNode(`$${jobApplicant.bid}`));
+                bidAmountDiv.appendChild(bid);
+
+                // create a rounded div for the selected bid details
+                const bidDetailsDiv = document.createElement('div');
+                bidDetailsDiv.classList.add('rounded-3', 'bg-warning', 'py-1', 'px-2', 'me-4');
+                const bidStatus = document.createElement('p');
+                bidStatus.classList.add('fs-6', 'fw-light', 'm-0');
+                const bidStatusIcon = document.createElement('span');
+                bidStatusIcon.classList.add('fa', 'fa-user', 'me-1');
+                bidStatus.appendChild(bidStatusIcon);
+                const bidStatusText = document.createElement('span');
+                bidStatusText.classList.add('font-weight-bold');
+                bidStatusText.appendChild(document.createTextNode(`${jobApplicant.username.slice(0, 2)}**${jobApplicant.username.slice(-2)}`));
+                bidStatus.appendChild(bidStatusText);
+                bidDetailsDiv.appendChild(bidStatus);
+
+                // append the rounded divs to the bid details div
+                currentBids.appendChild(bidAmountDiv);
+                currentBids.appendChild(bidDetailsDiv);
+
+                // append the other bids to the bid details text
+                otherBidsDetailsTextContent.appendChild(currentBids);
+
+                // append the other bids details text to the row
+                otherBidsDetailsText.appendChild(otherBidsDetailsTextContent);
+
+                // append the bid details text to the row
+                row.appendChild(otherBidsDetailsText);
+              });
+            }
+            
+            // if there are no jobApplicants
+            if (job.jobApplicants.length === 0) {
+              // create row for the other bid details text
+              const otherBidsDetailsText = document.createElement('div');
+              otherBidsDetailsText.classList.add('row', 'ms-3', 'mx-auto', 'mb-1', 'p-0');
+
+              // create div for the bid details text
+              const otherBidsDetailsTextContent = document.createElement('div');
+              otherBidsDetailsTextContent.classList.add('col-auto', 'align-self-center', 'text-start', 'fw-medium', 'text-dark', 'ms-1');
+
+              // display the current bids
+              otherBidsDetailsTextContent.textContent = 'No bids yet';
+
+              // append the other bids details text to the row
+              otherBidsDetailsText.appendChild(otherBidsDetailsTextContent);
+
+              // append the bid details text to the row
+              row.appendChild(otherBidsDetailsText);
+            }
+
+            //add dividers
+            const divider3 = document.createElement('hr');
+            divider3.classList.add('my-2', 'mx-auto', 'border-secondary-subtle');
+            row.appendChild(divider3);
+
+            // // create second row for bid details
+            // const secondRow = document.createElement('div');
+            // secondRow.classList.add('row', 'mt-3', 'mx-auto', 'mb-2');
+
+            // // create a column for the bid details
+            // const bidDetailsColumn = document.createElement('div');
+            // bidDetailsColumn.classList.add('col-auto', 'w-100', 'align-self-center', 'text-start', 'rounded-3', 'p-2', 'mb-3', 'shadow');
+
+
+            // create a div for the selected bid details
+            // if (job.selectedBid) {
+            //   // create "Selected Bid" header
+            //   const selectedBidHeader = document.createElement('h2');
+            //   selectedBidHeader.classList.add('mb-1', 'fs-5', 'mb-2', 'fw-bold', 'd-flex', 'justify-content-center', 'align-items-center', 'py-2');
+            //   const selectedBidIcon = document.createElement('span');
+            //   selectedBidIcon.classList.add('fa', 'fa-handshake-o', 'me-2');
+            //   selectedBidHeader.appendChild(selectedBidIcon);
+            //   selectedBidHeader.appendChild(document.createTextNode('Selected Bid'));
+            //   bidDetailsColumn.appendChild(selectedBidHeader);
+
+            //   const bidDetails = document.createElement('div');
+            //   bidDetails.classList.add('d-flex', 'justify-content-center', 'align-items-center', 'w-100', 'mb-3', 'text-dark');
+
+            //   // create a rounded div for the bid amount
+            //   const bidAmountDiv = document.createElement('div');
+            //   bidAmountDiv.classList.add('rounded-3', 'bg-success', 'py-1', 'px-2', 'me-2');
+            //   const bid = document.createElement('p');
+            //   bid.classList.add('fs-6', 'fw-medium', 'm-0', 'text-white');
+            //   const bidIcon = document.createElement('span');
+            //   bidIcon.classList.add('fa', 'fa-money', 'me-2', 'text-white');
+            //   bid.appendChild(bidIcon);
+            //   // get the bid amount from JobApplicants array matching the selected bid id
+            //   const selectedBid = job.jobApplicants.find(jobApplicant => jobApplicant.userId === job.selectedBid._id);
+            //   bid.appendChild(document.createTextNode(`$${selectedBid.bid}`));
+            //   bidAmountDiv.appendChild(bid);
+
+            //   // create a rounded div for the selected bid details
+            //   const bidDetailsDiv = document.createElement('div');
+            //   bidDetailsDiv.classList.add('rounded-3', 'bg-warning', 'py-1', 'px-2');
+            //   const bidStatus = document.createElement('p');
+            //   bidStatus.classList.add('fs-6', 'fw-light', 'm-0');
+            //   const bidStatusIcon = document.createElement('span');
+            //   bidStatusIcon.classList.add('fa', 'fa-user', 'me-1');
+            //   bidStatus.appendChild(bidStatusIcon);
+            //   const bidStatusText = document.createElement('span');
+            //   bidStatusText.classList.add('font-weight-bold');
+            //   bidStatusText.appendChild(document.createTextNode(`${selectedBid.firstName} ${selectedBid.lastName}`));
+            //   bidStatus.appendChild(bidStatusText);
+            //   bidDetailsDiv.appendChild(bidStatus);
+
+            //   // append the rounded divs to the bid details div
+            //   bidDetails.appendChild(bidAmountDiv);
+            //   bidDetails.appendChild(bidDetailsDiv);
+
+            //   bidDetailsColumn.appendChild(bidDetails);
+            // }
+            // else {
+            //   const bidStatus = document.createElement('p');
+            //   bidStatus.classList.add('fs-6', 'fw-medium', 'm-2', 'text-muted', 'align-self-center', 'text-center', 'w-100');
+            //   const bidStatusIcon = document.createElement('span');
+            //   bidStatusIcon.classList.add('fa', 'fa-meh-o', 'me-2');
+            //   bidStatus.appendChild(bidStatusIcon);
+            //   bidStatus.appendChild(document.createTextNode('No Selected Bid yet'));
+            //   bidDetailsColumn.appendChild(bidStatus);
+            // }
+
+            // secondRow.appendChild(bidDetailsColumn);
+
+            //add dividers
+            // const divider2 = document.createElement('hr');
+            // divider2.classList.add('my-2', 'mx-auto', 'border-secondary-subtle');
+            // secondRow.appendChild(divider2);
+
+            // // append the second row to the row
+            // row.appendChild(secondRow);
+
+            // // create extra row for the jobApplicants
+            // if (job.jobApplicants.length > 0) {
+            //   // create a scrollable div for the job applicants
+            //   // it should be scrollable if there are more than 3 job applicants
+            //   // contains a row for each job applicant with their details (First name, last name, bid, bid status)
+
+            //   // create a column for the job applicants
+            //   const jobApplicantsColumn = document.createElement('div');
+
+            //   // create "Job Applicants" header
+            //   const jobApplicantsHeader = document.createElement('h2');
+            //   jobApplicantsHeader.classList.add('ms-3', 'mt-3', 'mb-1', 'fs-6', 'mb-2', 'fw-bold', 'd-flex', 'align-items-center');
+            //   const jobApplicantsIcon = document.createElement('span');
+            //   jobApplicantsIcon.classList.add('fa', 'fa-users', 'me-2');
+            //   jobApplicantsHeader.appendChild(jobApplicantsIcon);
+            //   jobApplicantsHeader.appendChild(document.createTextNode('Job Applicants'));
+
+            //   // append the job applicants header to the job applicants column
+            //   jobApplicantsColumn.appendChild(jobApplicantsHeader);
+
+            //   // create an accordion for the job applicants
+            //   const accordion = document.createElement('div');
+            //   accordion.classList.add('accordion');
+
+            //   // create an accordion item for each job applicant
+            //   job.jobApplicants.forEach((applicant, index) => {
+            //     // create an accordion item
+            //     const accordionItem = document.createElement('div');
+            //     accordionItem.classList.add('accordion-item');
+
+            //     // create an accordion header
+            //     const accordionHeader = document.createElement('h2');
+            //     accordionHeader.id = `heading${index}`;
+            //     accordionHeader.classList.add('accordion-header');
+
+            //     // create an accordion button
+            //     const accordionButton = document.createElement('button');
+            //     accordionButton.classList.add('accordion-button', 'collapsed');
+            //     accordionButton.type = 'button';
+            //     accordionButton.setAttribute('data-bs-toggle', 'collapse');
+            //     accordionButton.setAttribute('data-bs-target', `#collapse${index}`);
+            //     accordionButton.setAttribute('aria-expanded', 'false');
+            //     accordionButton.setAttribute('aria-controls', `collapse${index}`);
+            //     accordionButton.innerHTML = `
+            //     <div class="d-flex justify-content-between w-100">
+            //       <div class="col-2">
+            //       <span class="me-2">${applicant.firstName} ${applicant.lastName}</span>
+            //       </div>
+            //       <div class="col-2">
+            //       <span class="badge bg-success">$${applicant.bid}</span>
+            //       </div>
+            //       <div class="col-2">
+            //       <span class="badge bg-dark">${applicant.bidStatus.toUpperCase()}</span>
+            //       </div>
+            //     </div>
+            //     `;
+
+            //     // append the accordion button to the accordion header
+            //     accordionHeader.appendChild(accordionButton);
+
+            //     // create a accordion collapse
+            //     const accordionCollapse = document.createElement('div');
+            //     accordionCollapse.id = `collapse${index}`;
+            //     accordionCollapse.classList.add('accordion-collapse', 'collapse');
+            //     accordionCollapse.setAttribute('aria-labelledby', `heading${index}`);
+            //     accordionCollapse.setAttribute('data-bs-parent', '#accordionExample');
+
+            //     // create a accordion body
+            //     const accordionBody = document.createElement('div');
+            //     accordionBody.classList.add('accordion-body');
+
+            //     // create a row for the job applicant details
+            //     const jobApplicantRow = document.createElement('div');
+            //     jobApplicantRow.classList.add('row', 'mx-auto', 'mb-2', 'justify-content-center', 'align-items-center', 'w-100');
+
+            //     // create a column for the job applicant bid
+            //     const jobApplicantBidColumn = document.createElement('div');
+            //     jobApplicantBidColumn.classList.add('col-auto', 'align-self-center', 'text-start', 'ms-3');
+
+            //     // create a div for the job applicant bid
+            //     const jobApplicantBid = document.createElement('div');
+            //     jobApplicantBid.classList.add('w-100', 'fs-6');
+            //     const jobApplicantBidIcon = document.createElement('span');
+            //     jobApplicantBidIcon.classList.add('fa', 'fa-money', 'me-1');
+            //     jobApplicantBid.appendChild(jobApplicantBidIcon);
+            //     jobApplicantBid.appendChild(document.createTextNode(`$${applicant.bid}`));
+            //     jobApplicantBidColumn.appendChild(jobApplicantBid);
+
+            //     // append the job applicant bid column to the row
+            //     jobApplicantRow.appendChild(jobApplicantBidColumn);
+
+            //     // create a column for the job applicant bid status
+            //     const jobApplicantBidStatusColumn = document.createElement('div');
+            //     jobApplicantBidStatusColumn.classList.add('col-auto', 'align-self-center', 'text-start', 'ms-3');
+
+            //     // create a div for the job applicant bid status
+            //     const jobApplicantBidStatus = document.createElement('div');
+            //     jobApplicantBidStatus.classList.add('d-flex', 'justify-content-start', 'w-100');
+            //     const jobApplicantBidStatusButton = document.createElement('button');
+            //     jobApplicantBidStatusButton.classList.add('btn', `btn-dark`, 'me-1');
+            //     // if jobStatus is completed, disable the button
+            //     if (job.jobStatus === 'completed') {
+            //       jobApplicantBidStatusButton.disabled = true;
+            //     }
+            //     if (applicant.bidStatus === 'submitted') {
+            //       jobApplicantBidStatusButton.innerText = 'Select';
+            //       jobApplicantBidStatusButton.classList.replace('btn-dark', 'btn-success');
+            //       //handle the click event for the select button
+            //       jobApplicantBidStatusButton.addEventListener('click', () => {
+            //         updateSelectedBid('submitted', applicant.userId);
+            //       });
+            //     } else if (applicant.bidStatus === 'accepted') {
+            //       jobApplicantBidStatusButton.innerText = 'Reject';
+            //       jobApplicantBidStatusButton.classList.replace('btn-dark', 'btn-danger');
+            //       //handle the click event for the reject button
+            //       jobApplicantBidStatusButton.addEventListener('click', () => {
+            //         updateSelectedBid('accepted', applicant.userId);
+            //       });
+            //     } else if (applicant.bidStatus === 'assigned') {
+            //       jobApplicantBidStatusButton.innerText = 'Start Job';
+            //       jobApplicantBidStatusButton.classList.replace('btn-dark', 'btn-info');
+            //       //handle the click event for the start job button
+            //       jobApplicantBidStatusButton.addEventListener('click', () => {
+            //         updateSelectedBid('assigned', applicant.userId);
+            //       });
+            //     } else if (applicant.bidStatus === 'withdrawn') {
+            //       jobApplicantBidStatusButton.innerText = 'Withdrawn';
+            //       jobApplicantBidStatusButton.classList.replace('btn-dark', 'btn-secondary');
+            //       jobApplicantBidStatusButton.disabled = true;
+            //     }
+            //     jobApplicantBidStatus.appendChild(jobApplicantBidStatusButton);
+            //     jobApplicantBidStatusColumn.appendChild(jobApplicantBidStatus);
+
+            //     // append the job applicant bid status column to the row
+            //     jobApplicantRow.appendChild(jobApplicantBidStatusColumn);
+
+            //     // append the job applicant row to the accordion body
+            //     accordionBody.appendChild(jobApplicantRow);
+
+            //     // append the accordion body to the accordion collapse
+            //     accordionCollapse.appendChild(accordionBody);
+
+            //     // append the accordion header to the accordion item
+            //     accordionItem.appendChild(accordionHeader);
+
+            //     // append the accordion collapse to the accordion item
+            //     accordionItem.appendChild(accordionCollapse);
+
+            //     // append the accordion item to the accordion
+            //     accordion.appendChild(accordionItem);
+            //   });
+
+            //   // append the accordion to the job applicants column
+            //   jobApplicantsColumn.appendChild(accordion);
+
+            //   // add dividers
+            //   const divider3 = document.createElement('hr');
+            //   divider3.classList.add('mt-4', 'my-2', 'mx-auto', 'border-secondary-subtle');
+            //   jobApplicantsColumn.appendChild(divider3);
+
+            //   // append the job applicants column to the row
+            //   row.appendChild(jobApplicantsColumn);
+            // }
+
+            // create third row for the 'Budget', AUD $jobPrice Per Hour, "Send Offer" button, "Message" button
+            const thirdRow = document.createElement('div');
+            thirdRow.classList.add('row', 'w-50', 'mt-2', 'mb-2', 'bg-secondary-subtle', 'rounded-3', 'shadow-sm', 'mx-auto', 'p-3', 'justify-content-center', 'align-items-center');
+
+            // create row for the budget
+            const budgetRow = document.createElement('div');
+            budgetRow.classList.add('row', 'mx-auto', 'mb-1', 'p-0', 'text-center', 'text-secondary', 'fs-5', 'justify-content-center');
+            budgetRow.textContent = 'Budget';
+
+            // append the budget row to the third row
+            thirdRow.appendChild(budgetRow);
+
+            // create a row for the budget amount
+            const budgetAmountRow = document.createElement('div');
+            budgetAmountRow.classList.add('row', 'mx-auto', 'mb-1', 'p-0', 'text-center', 'text-dark', 'fw-medium', 'fs-1', 'justify-content-center');
+            // create column for the budget amount
+            const budgetAmountColumn = document.createElement('div');
+            budgetAmountColumn.classList.add('col-auto', 'align-self-center', 'text-start', 'm-0', 'pe-0');
+
+            // create a div for the budget amount
+            const budgetAmount = document.createElement('div');
+            budgetAmount.appendChild(document.createTextNode(`AUD $${job.jobPrice}`));
+            budgetAmountColumn.appendChild(budgetAmount);
+
+            // append the budget amount column to the budget amount row
+            budgetAmountRow.appendChild(budgetAmountColumn);
+
+            // create column for "Per Hour"
+            const perHourColumn = document.createElement('div');
+            perHourColumn.classList.add('col-auto', 'align-self-center', 'text-start', 'm-0', 'mt-2');
+
+            // create a div for "Per Hour"
+            const perHour = document.createElement('div');
+            perHour.classList.add('w-100', 'fs-6', 'fw-light', 'text-secondary');
+            perHour.appendChild(document.createTextNode('Per Hour'));
+            perHourColumn.appendChild(perHour);
+
+            // append the per hour column to the budget amount row
+            budgetAmountRow.appendChild(perHourColumn);
+
+            // append the budget amount row to the third row
+            thirdRow.appendChild(budgetAmountRow);
+
+            // create a row for the send offer button and message button
+            const buttonsRow = document.createElement('div');
+            buttonsRow.classList.add('row', 'mx-auto', 'mb-1', 'p-0', 'text-center', 'text-dark', 'fw-bold', 'fs-6', 'justify-content-center');
+
+            // create a column for the send offer button
+            const sendOfferColumn = document.createElement('div');
+            sendOfferColumn.classList.add('col-auto', 'align-self-center', 'text-start', 'ms-1');
+
+            // create a button for the send offer button
+            const sendOfferButton = document.createElement('a');
+            sendOfferButton.classList.add('btn', 'btn-success', 'rounded-pill', 'px-4', 'py-2', 'me-2');
+            // add onclick event to the send offer button
+            sendOfferButton.addEventListener('click', () => {
+              // run the function to send the offer
+              if (bid) {
+                showBidModal(job, "update");
+              }
+              else {
+                showBidModal(job, "submit");
+              }
+            });
+
+            // create a span for the send offer button
+            const sendOfferButtonIcon = document.createElement('span');
+            sendOfferButtonIcon.classList.add('fa', 'fa-paper-plane', 'me-2');
+            sendOfferButton.appendChild(sendOfferButtonIcon);
+            if (bid) {
+              if (bid.bidStatus === "accepted") {
+                sendOfferButton.appendChild(document.createTextNode('Confirm'));
+              }
+              else if (bid.bidStatus === "assigned") {
+                sendOfferButton.appendChild(document.createTextNode('Start Job'));
+              }
+              else if (bid.bidStatus === "submitted") {
+                sendOfferButton.appendChild(document.createTextNode('Update Bid'));
+              }
+            }
+            else {
+              sendOfferButton.appendChild(document.createTextNode('Send Offer'));
+            }
+
+            // append the send offer button to the send offer column
+            sendOfferColumn.appendChild(sendOfferButton);
+
+            // append the send offer column to the buttons row
+            buttonsRow.appendChild(sendOfferColumn);
+
+            // create a column for the message button
+            const messageColumn = document.createElement('div');
+            messageColumn.classList.add('col-auto', 'align-self-center', 'text-start', 'ms-1');
+
+            // create a button for the message button
+            const messageButton = document.createElement('button');
+            messageButton.classList.add('btn', 'btn-dark', 'rounded-pill', 'px-4', 'py-2', 'me-2');
+
+            // create a span for the message button
+            const messageButtonIcon = document.createElement('span');
+            messageButtonIcon.classList.add('fa', 'fa-comment', 'me-2');
+            messageButton.appendChild(messageButtonIcon);
+
+            // create a span for the message button
+            const messageButtonText = document.createElement('span');
+            messageButtonText.classList.add('d-none', 'd-md-inline');
+            messageButtonText.appendChild(document.createTextNode('Message'));
+            messageButton.appendChild(messageButtonText);
+
+            // append the message button to the message column
+            messageColumn.appendChild(messageButton);
+
+            // append the message column to the buttons row
+            buttonsRow.appendChild(messageColumn);
+
+            // append the buttons row to the third row
+            thirdRow.appendChild(buttonsRow);
+
+            // append the third row to the row
+            row.appendChild(thirdRow);
+
+            // append the row to the job details container
+            jobDetailsContainer.appendChild(row);
+          }
+
+          // Check if the job details were not retrieved successfully
+          else if (jobDetails.error) {
+            // Display an error toast
+            toastr.error(jobDetails.error);
+          }
+
+          // Check if the job details were not retrieved successfully
+          else {
+            // Display an error toast
+            toastr.error(jobDetails.error);
+          }
+
+        }
+      });
+    }
+  </script>
+
+  <script>
+    // call the function to get the job details when the page is loaded
+    $(document).ready(function () {
+      // Get the first name of the user from the local storage
+      const user = JSON.parse(localStorage.getItem('user'));
+      const firstName = user.firstName;
+
+      // Set the first name of the user in the page
+      document.getElementById('firstName').textContent = firstName;
+
+      // Set the current date in the page
+      // document.getElementById('currentDate').textContent = new Date().toDateString();
+
+      // Get the job details
+      getJobDetails();
+    });
+  </script>
+
+</head>
+
+<body class="bg-light text-dark">
+
+  <!-- Top section  -->
+  <div id="job_details_container" class="container-fluid bg-light text-dark pt-2 col-7">
+    <!-- Header -->
+    <div class="row">
+      <!-- Welcom messege to left -->
+      <div class="col-6">
+        <h1 class="fs-6 fw-medium">Hi,</h1>
+        <h1 id="firstName" class="fs-5">Client</h1>
+      </div>
+
+      <!-- Nav -->
+      <div class="col-6 text-end">
+        <!-- Hamburger menu -->
+        <div class="dropdown">
+          <button class="btn btn-outline-dark btn-sm dropdown-toggle" type="button" id="dropdownMenuButton"
+            data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fa fa-bars"></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton">
+            <li>
+              <button class="dropdown-item" type="button" onclick="clearLocalStorageAndRedirect()">Log Out</button>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Back button -->
+    <div class="row mt-5 mb-2">
+      <div class="col-12">
+        <div class="input-group mb-3 shadow rounded-pill">
+          <button class="btn border-0 w-100 shadow-none me-2 text-body-secondary" type="button"
+            onclick="window.location.href='/pages/homes/provider_home.htm'"><i class="fa fa-chevron-left"></i> Go
+            Back</button>
+        </div>
+      </div>
+    </div>
+
+      <!-- Modal -->
+    <div id="bidModal" class="modal" aria-hidden="true" tabindex="-1">
+      <div class="modal-dialog" id="bidModalDialog">
+        <div class="modal-content" id="bidModalContent">
+        </div>
+      </div>
+    </div>
+
+    <!-- Details of job -->
+    <div class="row ms-0 mt-4 mb-2">
+      <div class="col-6 ms-0 px-1">
+        <h1 class="fs-6 fw-medium ">Job Details</h1>
+      </div>
+      <!-- Current Date to right -->
+      <!-- <div class="col-6 text-end"> -->
+        <!-- <h1 class="fs-6 fw-light text-body-secondary"> -->
+          <!-- date with date icon -->
+          <!-- <i class="fa fa-calendar me-2"></i> <span id="currentDate"></span> -->
+        <!-- </h1> -->
+      <!-- </div> -->
+    </div>
+    <div class="row shadow-none bg-light text-center rounded">
+      <div class="col-12" id="jobDetailsContainer">
+      </div>
+    </div>
+  </div>
+
+
+  </div>
+
+</body>

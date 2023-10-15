@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Login Page</title>
+
+  <!-- Bootstrap -->
+  <link rel="stylesheet" href="../utils/bootstrap-5.3/bootstrap.min.css" />
+  <script type='text/javascript' src="../utils/bootstrap-5.3/bootstrap.bundle.min.js"></script>
+
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="../utils/font-awesome-4.7.0/css/font-awesome.min.css">
+
+  <!-- JQuery -->
+  <script type='text/javascript' src="../utils/jquery-3.7.1.min.js"></script>
+
+  <!-- Bootstrap Select wait for JQuery to load before loading -->
+  <link rel="stylesheet" href="../utils/bootstrap-select-1.14.0-beta2/bootstrap-select.min.css" />
+  <script type='text/javascript' src="../utils/bootstrap-select-1.14.0-beta2/bootstrap-select.min.js"></script>
+
+  <script>
+    $(document).ready(function () {
+      $('.selectpicker').selectpicker({
+        size: 4
+      });
+    });
+  </script>
+
+  <!-- Toastr -->
+  <link rel="stylesheet" href="../utils/toastr-2.1.1/toastr.min.css" />
+  <script type='text/javascript' src="../utils/toastr-2.1.1/toastr.min.js"></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="../utils/main.css" />
+
+  <!-- Toggle password -->
+  <script type='text/javascript'>
+    $(document).ready(function () {
+      $('.toggle-password').click(function () {
+        var passwordInput = $(this).prev();
+        var passwordInputType = passwordInput.attr('type');
+        if (passwordInputType === 'password') {
+          passwordInput.attr('type', 'text');
+          $(this).html('<i class="fa fa-eye-slash"></i>');
+        } else {
+          passwordInput.attr('type', 'password');
+          $(this).html('<i class="fa fa-eye"></i>');
+        }
+      });
+    });
+  </script>
+
+  <!-- Form Validation -->
+  <script type='text/javascript'>
+
+    $(document).ready(function () {
+      // Add event listener to form input for each input
+      var form = document.getElementById('register_form');
+      var emailOrUsername = document.getElementById('emailOrUsername');
+      var password = document.getElementById('password');
+
+      function validateInput(inputField, errorMessage) {
+        if (
+          // inputField is emailOrUsername
+          inputField == emailOrUsername) {
+          // check valid email or username
+          if ($.trim(inputField.value) == '') {
+            // remove valid class
+            inputField.classList.remove('is-valid');
+            // add invalid class
+            inputField.classList.add('is-invalid');
+            // error  message
+            inputField.nextElementSibling.innerHTML = errorMessage;
+
+            return false;
+          } else {
+            // remove invalid class
+            inputField.classList.remove('is-invalid');
+            // clear error message
+            inputField.nextElementSibling.innerHTML = '';
+            // add valid class
+            inputField.classList.add('is-valid');
+
+            return true;
+          }
+        } else if (
+          // inputField is password
+          inputField == password) {
+          // check valid password
+          if ($.trim(inputField.value) == '') {
+            // remove valid class
+            inputField.classList.remove('is-valid');
+            // add invalid class
+            inputField.classList.add('is-invalid');
+            // add error messege to password-error div
+            $('#password-error').html(errorMessage);
+
+            return false;
+          } else {
+            // remove invalid class
+            inputField.classList.remove('is-invalid');
+            // clear error message
+            $('#password-error').html('');
+            // add valid class
+            inputField.classList.add('is-valid');
+
+            return true;
+          }
+        }
+      }
+
+      emailOrUsername.addEventListener('input', function (event) {
+        validateInput(emailOrUsername, 'Please enter your email or username');
+      });
+
+      password.addEventListener('input', function (event) {
+        validateInput(password, 'Please enter your password');
+      });
+
+      // Submit form
+
+      // Add event listener to form submit
+      form.addEventListener('submit', function (event) {
+
+        // prevent form from submitting
+        event.preventDefault();
+
+        // stop event propagation
+        event.stopPropagation();
+
+        // check if email or username is valid
+        const isEmailOrUsernameValid = validateInput(emailOrUsername, 'Please enter your email or username');
+        const isPasswordValid = validateInput(password, 'Please enter your password');
+
+        if (!isEmailOrUsernameValid || !isPasswordValid) {
+          return;
+        }
+
+        const emailOrUsernameValue = $.trim(emailOrUsername.value);
+        const passwordValue = $.trim(password.value);
+
+        // body
+        // {
+        //    "username": "janedoe_provider",
+        //     "password": "password"
+        // }
+
+        let data;
+
+        if (emailOrUsernameValue.includes('@')) {
+          data = {
+            email: emailOrUsernameValue,
+            password: passwordValue
+          };
+        } else {
+          data = {
+            username: emailOrUsernameValue,
+            password: passwordValue
+          };
+        }
+
+        // send data to server
+        $.ajax({
+          url: 'https://techgeeksprotobackend.azurewebsites.net/api/User/login',
+          type: 'POST',
+          data: data,
+          success: function (response) {
+          // Server response
+          //   {
+          //     "message": "Login successful",
+          //     "user": {
+          //         "_id": "6514f7958a8ed8f82295df31",
+          //         "username": "johndoe_client",
+          //         "email": "johndoe@example.com",
+          //         "accType": "client",
+          //         "firstName": "John",
+          //         "lastName": "Doe",
+          //         "tel": "0512345678",
+          //         "location": [
+          //             {
+          //                 "address": "20 Seaview Street, Byron Bay New South Wales 2481, Australia",
+          //                 "longitude": 153.616961,
+          //                 "latitude": -28.652513
+          //             }
+          //         ],
+          //         "serviceNames": [],
+          //         "avatar": null,
+          //         "onBoarded": false,
+          //         "verified": false
+          //     }
+          // }
+            // show success message using toastr
+            toastr.success('Login successful');
+
+            // save user data to local storage
+            localStorage.setItem('user', JSON.stringify(response.user));
+
+            // redirect to home page based on account type
+            if (response.user.accType == 'client') {
+              window.location.href = 'homes/client_home.htm';
+            } else if (response.user.accType == 'provider') {
+              window.location.href = 'homes/provider_home.htm';
+            }
+
+            // // show response from server using a modal
+            // $('#responseModal').attr('hidden', false);
+            // $('#responseModal').modal('show');
+            // $('#responseModal .modal-body').html(response.message);
+          },
+          error: function (xhr, status, error) {
+
+            // show error message using toastr
+            toastr.error('Login failed');
+
+            // show response from server using a modal
+            $('#responseModal').attr('hidden', false);
+            $('#responseModal').modal('show');
+            $('#responseModal .modal-body').html(xhr.responseJSON.message);
+          }
+        });
+
+      });
+    });
+
+
+  </script>
+
+</head>
+
+<!-- Login -->
+
+<body class="bg-light text-dark">
+  <!-- Header -->
+  <div id="register_container" class="container-fluid bg-light text-dark pt-5">
+
+    <!-- Modal -->
+    <div id="responseModal" class="modal modal-dialog-centered" aria-hidden="true" tabindex="-1" hidden>
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-body"></div>
+          <!-- Dismiss Button in Footer -->
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Dismiss</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="row">
+      <div class="col-12 col-sm-12 text-center">
+        <p class="fs-2 fw-bold">Hello!</p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-12 col-sm-12 text-center">
+        <p class="fs-5 fw-lighter">Enter your details below</p>
+      </div>
+    </div>
+
+    <!-- Form using bootstrap -->
+    <div class="col-6 col-sm-6 mx-auto mt-2 mb-5 p-5">
+      <form id="register_form" class="row g-3 needs-validation" novalidate>
+
+        <!-- Email or Username -->
+        <div class="row">
+          <div class="col-12 col-sm-12 mb-3">
+            <label for="emailOrUsername" class="form-label fw-medium text-body-secondary">Email or Username</label>
+            <input type="text" class="form-control border-0 p-3" id="emailOrUsername"
+              placeholder="&#xf2c0;    Your Email or Username" style="font-family:Arial, FontAwesome" required>
+            <div class="invalid-feedback"></div>
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="row">
+          <div class="col-12 col-sm-12 mb-3">
+            <label for="password" class="form-label">Password</label>
+            <div class="input-group flex-wrap">
+              <input type="password" class="form-control border-0 p-3" id="password"
+                placeholder="&#xf084;    Your Password" style="font-family:Arial, FontAwesome" required>
+              <button class="btn btn-toggle-password border-0 toggle-password" type="button"><i
+                  class="fa fa-eye"></i></button>
+              <div id="password-error" class="invalid-feedback w-100"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Forgot Password -->
+        <div class="row">
+          <div class="col-12 col-sm-12 mb-3">
+            <!-- Alight right -->
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+              <a href="" class="text-decoration-none text-body-secondary">Forgot Password?</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="row">
+          <div class="col-12 col-sm-12 mt-2 mb-3">
+            <div class="d-grid gap-2">
+              <button class="btn btn-lg p-3 btn-dark" type="submit">Sign In</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sign Up -->
+        <div class="row">
+          <div class="col-12 col-sm-12 mb-3">
+            <!-- Alight right -->
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+              <a href="/pages/register.htm" class="text-decoration-none text-body-secondary">No Account? Register here</a>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</body>

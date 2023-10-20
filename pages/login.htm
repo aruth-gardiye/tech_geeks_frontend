@@ -56,7 +56,7 @@
 
     $(document).ready(function () {
       // Add event listener to form input for each input
-      var form = document.getElementById('register_form');
+      var form = document.getElementById('login_form');
       var emailOrUsername = document.getElementById('emailOrUsername');
       var password = document.getElementById('password');
 
@@ -247,22 +247,30 @@
       </div>
     </div>
 
+    <!-- Logo -->
+    <div class="row">
+      <div class="col-12 col-sm-12 text-center mb-4">
+        <img src="../images/logo_m.png" class="img-fluid ms-0" style="width: 20%;" alt="Company Logo">
+      </div>
+    </div>
+
 
     <div class="row">
-      <div class="col-12 col-sm-12 text-center">
-        <p class="fs-2 fw-bold">Hello!</p>
+      <div class="col-12 col-sm-12 text-center mt-2">
+        <!-- <p class="fs-2 fw-bold">Hello!</p> -->
       </div>
     </div>
 
     <div class="row">
       <div class="col-12 col-sm-12 text-center">
-        <p class="fs-5 fw-lighter">Enter your details below</p>
+        <p class="fs-5 fw-lighter">Enter your details below to 
+          <span style="text-decoration: underline;">login</span></p>
       </div>
     </div>
 
     <!-- Form using bootstrap -->
     <div class="col-6 col-sm-6 mx-auto mt-2 mb-5 p-5">
-      <form id="register_form" class="row g-3 needs-validation" novalidate>
+      <form id="login_form" class="row g-3 needs-validation" novalidate>
 
         <!-- Email or Username -->
         <div class="row">
